@@ -1,0 +1,63 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0F172A;
+  --bg2:       #1E293B;
+  --bg3:       #334155;
+  --text:      #F8FAFC;
+  --text2:     #CBD5E1;
+  --text3:     #94A3B8;
+  --text4:     #64748B;
+  --text5:     #475569;
+  --indigo:    #6366F1;
+  --indigo-l:  #A5B4FC;
+  --indigo-d:  #312e81;
+  --green:     #4ADE80;
+  --green-d:   #052e16;
+  --red:       #F87171;
+  --red-d:     #450a0a;
+  --yellow:    #FBBF24;
+  --yellow-d:  #422006;
+  --border:    #1E293B;
+  --border2:   #334155;
+  --radius:    14px;
+  --radius-lg: 20px;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --nav-h:     64px;
+  --sidebar-w: 240px;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text4); }
+
+/* Focus */
+:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; border-radius: 4px; }
+
+/* Animations */
+@keyframes fadeIn   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes slideUp  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn  { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes scaleIn  { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes shimmer  { 0%,100% { opacity:.4 } 50% { opacity:.9 } }
+
+.fade-in   { animation: fadeIn  .25s ease both; }
+.slide-up  { animation: slideUp .3s  ease both; }
+.scale-in  { animation: scaleIn .2s  ease both; }
+
+/* Utility */
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
