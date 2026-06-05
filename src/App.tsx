@@ -5,7 +5,6 @@ import { AppShell } from '@/components/layout/AppShell'
 import { DashboardPage }    from '@/pages/DashboardPage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
 import { AnalyticsPage }    from '@/pages/AnalyticsPage'
-import { GoalsPage }        from '@/pages/GoalsPage'
 import { RecurringPage }    from '@/pages/RecurringPage'
 import { LoginPage, RegisterPage } from '@/pages/AuthPages'
 import { Spinner } from '@/components/ui'
@@ -43,7 +42,6 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
       <Route path="/analytics"   element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
-      <Route path="/goals"       element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
       <Route path="/recurring"   element={<ProtectedRoute><RecurringPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

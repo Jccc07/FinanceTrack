@@ -21,14 +21,14 @@
   --border:    #1E293B;
   --border2:   #334155;
   --radius:    14px;
-  --radius-lg: 20px;
+  --radius-lg: 18px;
   --font-head: 'Syne', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --nav-h:     64px;
   --sidebar-w: 240px;
 }
 
-html, body, #root {
+html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
@@ -36,6 +36,22 @@ html, body, #root {
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Prevent horizontal scroll everywhere */
+#root {
+  height: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Fix stretched fonts on iOS */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Scrollbars */
@@ -61,3 +77,9 @@ html, body, #root {
 
 /* Utility */
 .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+/* Ensure no overflow issues on mobile */
+@media (max-width: 768px) {
+  * { -webkit-overflow-scrolling: touch; }
+  img, video { max-width: 100%; }
+}
