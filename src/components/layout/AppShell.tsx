@@ -178,52 +178,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <div className="mobile-only" style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
-        background: 'var(--bg2)', borderTop: '1px solid var(--border)',
-        flexDirection: 'column', flexShrink: 0,
-      }}>
-        {/* Nav items row — sits above home indicator */}
-        <div style={{ display: 'flex', padding: '8px 0 8px' }}>
-        {NAV.map(({ to, icon: Icon, label }) => {
-          const isActive = to === '/'
-            ? location.pathname === '/'
-            : location.pathname.startsWith(to)
-          return (
-            <NavLink key={to} to={to} end={to === '/'}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none', padding: '4px 0' }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isActive ? 'rgba(99,102,241,.2)' : 'transparent',
-                transition: 'background .15s',
-              }}>
-                <Icon size={20} color={isActive ? 'var(--indigo-l)' : 'var(--text4)'} strokeWidth={isActive ? 2.5 : 2} />
-              </div>
-              <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--indigo-l)' : 'var(--text4)' }}>{label}</span>
-            </NavLink>
-          )
-        })}
+      <nav className="mobile-bottom-nav">
+        <div style={{ display: 'flex', padding: '6px 0 2px' }}>
+          {NAV.map(({ to, icon: Icon, label }) => {
+            const isActive = to === '/'
+              ? location.pathname === '/'
+              : location.pathname.startsWith(to)
+            return (
+              <NavLink key={to} to={to} end={to === '/'}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none', padding: '4px 0' }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? 'rgba(99,102,241,.2)' : 'transparent',
+                  transition: 'background .15s',
+                }}>
+                  <Icon size={20} color={isActive ? 'var(--indigo-l)' : 'var(--text4)'} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+                <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--indigo-l)' : 'var(--text4)' }}>{label}</span>
+              </NavLink>
+            )
+          })}
         </div>
-        {/* Safe area spacer — fills the home indicator zone with nav background */}
-        <div className="safe-area-bottom" />
-      </div>
+      </nav>
 
       <style>{`
         .desktop-sidebar { display: flex !important; }
         .mobile-only { display: none !important; }
-        .safe-area-bottom { display: none; }
+        .mobile-bottom-nav { display: none; }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .mobile-only { display: flex !important; }
-          .page-content { padding: 16px 16px 120px !important; }
+          .mobile-bottom-nav {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 30;
+            background: var(--bg2);
+            border-top: 1px solid var(--border2);
+            padding-bottom: env(safe-area-inset-bottom);
+          }
+          .page-content { padding: 16px 16px 90px !important; }
           .mobile-top-bar {
             padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)) !important;
-          }
-          .safe-area-bottom {
-            display: block;
-            height: env(safe-area-inset-bottom);
-            min-height: 0;
-            background: var(--bg2);
           }
         }
         @media (min-width: 769px) {
