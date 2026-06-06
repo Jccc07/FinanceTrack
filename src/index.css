@@ -49,6 +49,11 @@ html, body {
   background: var(--bg);
 }
 
+/* Darken body background when modal is open (covers safe-area inset) */
+body.modal-open {
+  background: #000 !important;
+}
+
 /* Fix stretched fonts on iOS */
 html {
   -webkit-text-size-adjust: 100%;
