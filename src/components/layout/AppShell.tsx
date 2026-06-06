@@ -217,6 +217,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             background: var(--bg2);
             border-top: 1px solid var(--border2);
             padding-bottom: min(env(safe-area-inset-bottom), 0px);
+            transition: background 0.2s ease;
+          }
+          body.modal-open .mobile-bottom-nav {
+            background: rgba(5, 8, 20, 0.85);
+            border-top-color: transparent;
           }
           .page-content { padding: 16px 16px 90px !important; }
           .mobile-top-bar {

@@ -180,7 +180,11 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    document.body.classList.add('modal-open')
+    return () => {
+      window.removeEventListener('keydown', handler)
+      document.body.classList.remove('modal-open')
+    }
   }, [open, onClose])
 
   if (!open) return null
