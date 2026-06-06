@@ -188,23 +188,21 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 1000, overflowY: 'auto',
         paddingTop: 'calc(env(safe-area-inset-top) + 60px)',
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
-        paddingLeft: 16, paddingRight: 16,
-        overflowY: 'auto',
       }}
     >
+      {/* inner flex wrapper — fills at least the remaining height so modal centers */}
+      <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
       <div
         onClick={e => e.stopPropagation()}
         className="scale-in"
         style={{
           background: 'var(--bg2)', border: '1px solid var(--border2)',
           borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: width,
-          maxHeight: 'calc(100dvh - env(safe-area-inset-top) - 140px)',
-          overflowY: 'auto',
           padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,.5)',
+          margin: '16px 0',
         }}
       >
         {title && (
@@ -214,6 +212,7 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
           </div>
         )}
         {children}
+      </div>
       </div>
     </div>
   )
