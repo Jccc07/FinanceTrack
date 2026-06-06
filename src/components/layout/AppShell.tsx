@@ -91,8 +91,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         transition: 'transform .25s ease',
         borderRight: '1px solid var(--border2)',
       }}>
-        {/* Drawer header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 16px 12px' }}>
+        {/* Drawer header — padded below status bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 16px 12px',
+          paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--indigo)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Wallet size={16} color="#fff" />
@@ -174,11 +178,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <div className="mobile-only mobile-bottom-nav" style={{
+      <div className="mobile-only" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
         background: 'var(--bg2)', borderTop: '1px solid var(--border)',
-        display: 'flex', flexShrink: 0,
+        display: 'flex', flexDirection: 'column', flexShrink: 0,
       }}>
+        <div style={{
+          display: 'flex',
+          paddingTop: 8,
+          paddingBottom: 'max(12px, calc(env(safe-area-inset-bottom) + 8px))',
+        }}>
         {NAV.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/'
             ? location.pathname === '/'
@@ -197,6 +206,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </NavLink>
           )
         })}
+        </div>
       </div>
 
       <style>{`
@@ -208,9 +218,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           .page-content { padding: 16px 16px 100px !important; }
           .mobile-top-bar {
             padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)) !important;
-          }
-          .mobile-bottom-nav {
-            padding: 8px 0 max(12px, calc(env(safe-area-inset-bottom) + 8px)) !important;
           }
         }
         @media (min-width: 769px) {
