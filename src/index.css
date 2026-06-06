@@ -30,13 +30,12 @@
 
 html, body {
   height: 100%;
-  background: var(--bg);
+  background: #1E293B; /* matches --bg2 / nav bar color so iOS bottom safe zone blends in */
   color: var(--text);
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  /* Prevent horizontal scroll */
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -47,6 +46,7 @@ html, body {
   min-height: 100dvh;
   overflow-x: hidden;
   max-width: 100vw;
+  background: var(--bg);
 }
 
 /* Fix stretched fonts on iOS */
