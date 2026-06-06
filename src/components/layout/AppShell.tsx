@@ -178,16 +178,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <div className="mobile-only" style={{
+      <div className="mobile-only bottom-nav-shell" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
         background: 'var(--bg2)', borderTop: '1px solid var(--border)',
         display: 'flex', flexDirection: 'column', flexShrink: 0,
       }}>
-        <div style={{
-          display: 'flex',
-          paddingTop: 8,
-          paddingBottom: 'max(12px, calc(env(safe-area-inset-bottom) + 8px))',
-        }}>
+        <div className="bottom-nav-inner" style={{ display: 'flex' }}>
         {NAV.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/'
             ? location.pathname === '/'
@@ -218,6 +214,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           .page-content { padding: 16px 16px 100px !important; }
           .mobile-top-bar {
             padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)) !important;
+          }
+          .bottom-nav-inner {
+            padding-top: 8px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
           }
         }
         @media (min-width: 769px) {
