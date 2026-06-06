@@ -59,8 +59,36 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
         </div>
         {error && <p style={{ fontSize: 13, color: 'var(--red)' }}>{error}</p>}
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button fullWidth loading={loading} onClick={submit}>Add account</Button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
+              cursor: 'pointer', fontSize: 14, fontWeight: 600,
+              fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
+              background: 'var(--bg3)', color: 'var(--text2)', transition: 'opacity .15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={loading}
+            style={{
+              flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 600,
+              fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
+              background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1,
+              transition: 'opacity .15s',
+            }}
+            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            {loading ? 'Adding…' : 'Add account'}
+          </button>
         </div>
       </div>
     </Modal>
