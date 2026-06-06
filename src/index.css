@@ -83,8 +83,9 @@ html {
 @media (max-width: 768px) {
   * { -webkit-overflow-scrolling: touch; }
   img, video { max-width: 100%; }
-  .bottom-nav-inner {
-    padding-top: 8px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  .safe-area-bottom {
+    display: block;
+    height: env(safe-area-inset-bottom);
+    background: var(--bg2);
   }
 }

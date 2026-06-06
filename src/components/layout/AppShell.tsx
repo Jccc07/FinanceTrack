@@ -178,12 +178,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <div className="mobile-only bottom-nav-shell" style={{
+      <div className="mobile-only" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
         background: 'var(--bg2)', borderTop: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
+        flexDirection: 'column', flexShrink: 0,
       }}>
-        <div className="bottom-nav-inner" style={{ display: 'flex' }}>
+        {/* Nav items row — sits above home indicator */}
+        <div style={{ display: 'flex', padding: '8px 0 8px' }}>
         {NAV.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/'
             ? location.pathname === '/'
@@ -203,21 +204,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )
         })}
         </div>
+        {/* Safe area spacer — fills the home indicator zone with nav background */}
+        <div className="safe-area-bottom" />
       </div>
 
       <style>{`
         .desktop-sidebar { display: flex !important; }
         .mobile-only { display: none !important; }
+        .safe-area-bottom { display: none; }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .mobile-only { display: flex !important; }
-          .page-content { padding: 16px 16px 100px !important; }
+          .page-content { padding: 16px 16px 120px !important; }
           .mobile-top-bar {
             padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)) !important;
           }
-          .bottom-nav-inner {
-            padding-top: 8px;
-            padding-bottom: max(12px, env(safe-area-inset-bottom));
+          .safe-area-bottom {
+            display: block;
+            height: env(safe-area-inset-bottom);
+            min-height: 0;
+            background: var(--bg2);
           }
         }
         @media (min-width: 769px) {
