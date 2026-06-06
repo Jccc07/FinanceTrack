@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 
 // ─── Button ────────────────────────────────────────────────────────────────
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -183,46 +184,38 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
   }, [open, onClose])
 
   if (!open) return null
-  return (
-    <>
-      {/* Layer 1: full-screen backdrop — never scrolls, always covers everything */}
-      <div onClick={onClose} style={{
+
+  return ReactDOM.createPortal(
+    <div
+      onClick={onClose}
+      style={{
         position: 'fixed', inset: 0,
         background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)',
-        zIndex: 1000,
-      }} />
-      {/* Layer 2: scroll container — sits on top of backdrop, handles overflow */}
-      <div style={{
-        position: 'fixed', inset: 0,
-        zIndex: 1001,
-        overflowY: 'auto',
-        display: 'flex', justifyContent: 'center',
-        paddingTop: 'calc(env(safe-area-inset-top) + 64px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 84px)',
-        paddingLeft: 16, paddingRight: 16,
-        pointerEvents: 'none',
-      }}>
-        <div
-          onClick={e => e.stopPropagation()}
-          className="scale-in"
-          style={{
-            background: 'var(--bg2)', border: '1px solid var(--border2)',
-            borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: width,
-            padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,.5)',
-            alignSelf: 'center',
-            pointerEvents: 'auto',
-          }}
-        >
-          {title && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 18, fontWeight: 700 }}>{title}</h2>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, fontSize: 20, lineHeight: 1 }}>✕</button>
-            </div>
-          )}
-          {children}
-        </div>
+        zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="scale-in"
+        style={{
+          background: 'var(--bg2)', border: '1px solid var(--border2)',
+          borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: width,
+          maxHeight: '80dvh', overflowY: 'auto',
+          padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,.5)',
+        }}
+      >
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 18, fontWeight: 700 }}>{title}</h2>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, fontSize: 20, lineHeight: 1 }}>✕</button>
+          </div>
+        )}
+        {children}
       </div>
-    </>
+    </div>,
+    document.body
   )
 }
 
