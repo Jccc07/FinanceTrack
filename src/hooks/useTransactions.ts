@@ -21,9 +21,10 @@ export interface TransactionFilters {
 export function useTransactions(filters: TransactionFilters = {}) {
   const userId = useAuthStore(s => s.user?.id)
   const month = filters.month ?? new Date()
+  const monthKey = format(month, 'yyyy-MM')
 
   return useQuery({
-    queryKey: [...TRANSACTIONS_KEY, userId, filters],
+    queryKey: [...TRANSACTIONS_KEY, userId, monthKey, filters.category ?? null, filters.accountId ?? null, filters.type ?? null, filters.limit ?? null],
     queryFn: async () => {
       let query = supabase
         .from('transactions').select('*').eq('user_id', userId!)

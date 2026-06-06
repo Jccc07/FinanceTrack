@@ -148,9 +148,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ── Main content ── */}
       <main style={{ flex: 1, overflow: 'hidden', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Mobile top bar — outside scroll so it never moves */}
-        <div className="mobile-only" style={{
+        <div className="mobile-only mobile-top-bar" style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px', borderBottom: '1px solid var(--border)',
+          padding: '12px 16px', paddingTop: 'calc(env(safe-area-inset-top) + 12px)',
+          borderBottom: '1px solid var(--border)',
           background: 'var(--bg)', flexShrink: 0, zIndex: 10,
         }}>
           <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px' }}>FinTrack</span>
@@ -173,11 +174,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ── Mobile bottom nav ── */}
-      <div className="mobile-only" style={{
+      <div className="mobile-only mobile-bottom-nav" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
         background: 'var(--bg2)', borderTop: '1px solid var(--border)',
-        display: 'flex', padding: '8px 0 max(8px, env(safe-area-inset-bottom))',
-        flexShrink: 0,
+        display: 'flex', flexShrink: 0,
       }}>
         {NAV.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/'
@@ -206,6 +206,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           .desktop-sidebar { display: none !important; }
           .mobile-only { display: flex !important; }
           .page-content { padding: 16px 16px 100px !important; }
+          .mobile-top-bar {
+            padding-top: max(12px, calc(env(safe-area-inset-top) + 12px)) !important;
+          }
+          .mobile-bottom-nav {
+            padding: 8px 0 max(12px, calc(env(safe-area-inset-bottom) + 8px)) !important;
+          }
         }
         @media (min-width: 769px) {
           .page-content { padding: 28px 32px 32px !important; max-width: 1100px !important; }
