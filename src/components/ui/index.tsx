@@ -75,16 +75,27 @@ export function Select({ label, error, children, ...props }: SelectProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {label && <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text2)' }}>{label}</label>}
-      <select
-        style={{
-          width: '100%', background: 'var(--bg2)', border: `1px solid ${error ? 'var(--red)' : 'var(--border2)'}`,
-          borderRadius: 12, padding: '10px 14px', color: 'var(--text)', fontSize: 14,
-          fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer',
-        }}
-        {...props}
-      >
-        {children}
-      </select>
+      <div style={{ position: 'relative' }}>
+        <select
+          style={{
+            width: '100%', background: 'var(--bg2)', border: `1px solid ${error ? 'var(--red)' : 'var(--border2)'}`,
+            borderRadius: 12, padding: '10px 36px 10px 14px', color: 'var(--text)', fontSize: 14,
+            fontFamily: 'var(--font-body)', outline: 'none', cursor: 'pointer',
+            appearance: 'none', WebkitAppearance: 'none',
+          } as React.CSSProperties}
+          {...props}
+        >
+          {children}
+        </select>
+        <span style={{
+          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+          pointerEvents: 'none', color: 'var(--text3)', display: 'flex', alignItems: 'center',
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </span>
+      </div>
       {error && <span style={{ fontSize: 12, color: 'var(--red)' }}>{error}</span>}
     </div>
   )
@@ -177,8 +188,8 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 16,
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        zIndex: 1000, padding: '72px 16px 32px', overflowY: 'auto',
       }}
     >
       <div
@@ -187,8 +198,8 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
         style={{
           background: 'var(--bg2)', border: '1px solid var(--border2)',
           borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: width,
-          maxHeight: '90vh', overflowY: 'auto', padding: 24,
-          boxShadow: '0 24px 64px rgba(0,0,0,.5)',
+          padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,.5)',
+          marginBottom: 24,
         }}
       >
         {title && (
