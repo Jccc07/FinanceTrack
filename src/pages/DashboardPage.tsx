@@ -7,7 +7,7 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { useNextPayday } from '@/hooks/useIncomeSchedules'
 import { useAllRecurringItems } from '@/hooks/useRecurringItems'
 import { CATEGORIES } from '@/constants/categories'
-import { Card, Amount, EmptyState, Spinner, Modal, Input, Select, Button } from '@/components/ui'
+import { Amount, EmptyState, Spinner, Modal, Input, Select, Button } from '@/components/ui'
 import { AddTransactionModal } from '@/components/modals/AddTransactionModal'
 import { TransactionDetailModal } from '@/components/modals/TransactionDetailModal'
 
@@ -16,6 +16,7 @@ const ACCOUNT_TYPE_ICONS: Record<string, string> = {
   ewallet: '📱', bank: '🏦', cash: '💵', credit: '💳', savings: '🏦', other: '💼',
 }
 
+// ─── Add Account Modal ────────────────────────────────────────────────────────
 function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const createAccount = useCreateAccount()
   const [name, setName] = useState('')
@@ -66,14 +67,208 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
   )
 }
 
+// ─── Account Transactions Modal ───────────────────────────────────────────────
+function AccountTransactionsModal({ account, open, onClose }: { account: any; open: boolean; onClose: () => void }) {
+  const { data: txns = [], isLoading } = useTransactions({
+    month: new Date(),
+    accountId: account?.id,
+  })
+
+  if (!account) return null
+
+  return (
+    <Modal open={open} onClose={onClose} title={`${account.name} — ${format(new Date(), 'MMMM yyyy')}`} width={440}>
+      <div>
+        {/* Account balance header */}
+        <div style={{
+          background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px',
+          marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: account.color_hex ?? 'var(--indigo)' }} />
+            <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Current balance</span>
+          </div>
+          <Amount value={Number(account.balance)} size="md" />
+        </div>
+
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><Spinner /></div>
+        ) : txns.length === 0 ? (
+          <EmptyState icon={<TrendingUp size={20} />} title="No transactions this month" description="Transactions for this account will appear here" />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {txns.map((t, i) => {
+              const cat = CATEGORIES.find(c => c.key === t.category)
+              return (
+                <div key={t.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 0',
+                  borderBottom: i < txns.length - 1 ? '1px solid var(--border)' : 'none',
+                }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                  }}>
+                    {cat?.icon ?? '💳'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cat?.label ?? t.category}
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)' }}>
+                      {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
+                      {t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}
+                    </p>
+                  </div>
+                  <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                </div>
+              )
+            })}
+          </div>
+        )}
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
+          For full history, visit the Transactions page
+        </p>
+      </div>
+    </Modal>
+  )
+}
+
+// ─── Recurring Summary Modal ──────────────────────────────────────────────────
+function RecurringSummaryModal({ type, open, onClose, recurringItems, transactions }: {
+  type: 'income' | 'expense'
+  open: boolean
+  onClose: () => void
+  recurringItems: any[]
+  transactions: any[]
+}) {
+  const monthStr = format(new Date(), 'yyyy-MM')
+  const items = recurringItems.filter(r =>
+    type === 'income' ? r.item_type === 'income' : r.item_type !== 'income'
+  )
+
+  // Determine which items are paid this month by checking if a transaction
+  // with the recurring item's rid tag exists in the current month's transactions
+  const paidIds = new Set(
+    transactions
+      .map(t => {
+        const match = t.note?.match(/__rid:([^_]+)__/)
+        return match ? match[1] : null
+      })
+      .filter(Boolean)
+  )
+
+  const title = type === 'income' ? 'Expected Income' : 'Expected Expenses'
+  const accentColor = type === 'income' ? 'var(--green)' : 'var(--red)'
+  const total = items.reduce((s, r) => s + Number(r.amount), 0)
+  const paidTotal = items.filter(r => paidIds.has(r.id)).reduce((s, r) => s + Number(r.amount), 0)
+
+  return (
+    <Modal open={open} onClose={onClose} title={`${title} — ${format(new Date(), 'MMMM yyyy')}`} width={440}>
+      <div>
+        {/* Summary bar */}
+        <div style={{
+          background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px',
+          marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div>
+            <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>
+              {paidIds.size > 0
+                ? `${items.filter(r => paidIds.has(r.id)).length} of ${items.length} ${type === 'income' ? 'received' : 'paid'}`
+                : `${items.length} item${items.length !== 1 ? 's' : ''} scheduled`}
+            </p>
+            <Amount value={paidTotal} size="md" />
+            {total !== paidTotal && (
+              <p style={{ fontSize: 11, color: 'var(--text4)', marginTop: 1 }}>
+                of ₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2 })} total
+              </p>
+            )}
+          </div>
+          <div style={{ fontSize: 22 }}>{type === 'income' ? '💰' : '📋'}</div>
+        </div>
+
+        {items.length === 0 ? (
+          <EmptyState
+            icon={<TrendingUp size={20} />}
+            title={`No scheduled ${type === 'income' ? 'income' : 'expenses'}`}
+            description={`Add recurring items in the Recurring page`}
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {items.map((r, i) => {
+              const isPaid = paidIds.has(r.id)
+              const cat = CATEGORIES.find(c => c.key === r.category)
+              return (
+                <div key={r.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 0',
+                  borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
+                  opacity: isPaid ? 0.55 : 1,
+                }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                  }}>
+                    {cat?.icon ?? (type === 'income' ? '💰' : '📋')}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: 13, fontWeight: 600, color: 'var(--text)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      textDecoration: isPaid ? 'line-through' : 'none',
+                    }}>
+                      {r.name}
+                    </p>
+                    <p style={{ fontSize: 11, color: isPaid ? 'var(--green)' : 'var(--text3)', textDecoration: isPaid ? 'line-through' : 'none' }}>
+                      {isPaid
+                        ? (type === 'income' ? 'Received' : 'Paid')
+                        : `Due ${format(new Date(r.next_due_date + 'T00:00:00'), 'MMM d')}`}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <Amount value={Number(r.amount)} size="sm" />
+                    {isPaid && (
+                      <p style={{ fontSize: 10, color: 'var(--green)', marginTop: 1 }}>✓ done</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
+          Manage recurring items in the Recurring page
+        </p>
+      </div>
+    </Modal>
+  )
+}
+
+// ─── Section Label ────────────────────────────────────────────────────────────
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{
+      fontSize: 11, fontWeight: 600, color: 'var(--text4)',
+      textTransform: 'uppercase', letterSpacing: '0.07em',
+      marginBottom: 8,
+    }}>{children}</p>
+  )
+}
+
+// ─── Dashboard Page ───────────────────────────────────────────────────────────
 export function DashboardPage() {
   const [addTxnOpen, setAddTxnOpen] = useState(false)
   const [addAcctOpen, setAddAcctOpen] = useState(false)
   const [selectedTxn, setSelectedTxn] = useState<any>(null)
+  const [selectedAccount, setSelectedAccount] = useState<any>(null)
+  const [recurringModal, setRecurringModal] = useState<'income' | 'expense' | null>(null)
+
   const { user } = useAuthStore()
   const totalBalance = useTotalBalance()
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts()
-  const { data: transactions = [], isLoading: txnsLoading } = useTransactions({ month: new Date(), limit: 10 })
+  const { data: transactions = [], isLoading: txnsLoading, isError: txnsError } = useTransactions({ month: new Date(), limit: 10 })
   const nextPayday = useNextPayday()
   const { data: recurring = [] } = useAllRecurringItems()
 
@@ -91,8 +286,8 @@ export function DashboardPage() {
     <div className="fade-in">
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800, marginBottom: 2 }}>
-          Hey, {name} 👋
+        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.3px', marginBottom: 2 }}>
+          Hey, {name}
         </h1>
         <p style={{ color: 'var(--text3)', fontSize: 13 }}>{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
       </div>
@@ -100,38 +295,44 @@ export function DashboardPage() {
       {/* Total Balance */}
       <div style={{
         background: 'linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)',
-        borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: 12,
+        borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: 16,
         border: '1px solid rgba(99,102,241,.3)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Balance</span>
           <Wallet size={18} color="rgba(255,255,255,.5)" />
         </div>
-        <div style={{ fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-head)', color: '#fff', letterSpacing: '-1px', marginBottom: 4 }}>
+        <div style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-body)', color: '#fff', letterSpacing: '-1px', marginBottom: 4 }}>
           ₱{totalBalance.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,.5)' }}>{accounts.length} account{accounts.length !== 1 ? 's' : ''}</p>
       </div>
 
-      {/* Accounts grid */}
+      {/* Accounts */}
       {accountsLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}><Spinner /></div>
       ) : (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+        <div style={{ marginBottom: 16 }}>
+          <SectionLabel>Accounts</SectionLabel>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {accounts.map(a => (
-              <div key={a.id} style={{
+              <button key={a.id} onClick={() => setSelectedAccount(a)} style={{
                 background: 'var(--bg2)', borderRadius: 14, padding: '14px',
                 border: `1px solid ${a.color_hex ?? 'var(--border)'}33`,
-              }}>
+                textAlign: 'left', cursor: 'pointer',
+                transition: 'border-color .15s, background .15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg2)' }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: a.color_hex ?? 'var(--indigo)', flexShrink: 0 }} />
                   <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</span>
                 </div>
-                <p style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-head)', color: 'var(--text)' }}>
+                <p style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-body)', color: 'var(--text)' }}>
                   ₱{Number(a.balance).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-              </div>
+              </button>
             ))}
             {/* Add account tile */}
             <button onClick={() => setAddAcctOpen(true)} style={{
@@ -143,26 +344,43 @@ export function DashboardPage() {
               <Plus size={16} /> Add account
             </button>
           </div>
-        </>
+        </div>
       )}
 
-      {/* Income + Expense row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-        <div style={{ background: 'var(--bg2)', borderRadius: 14, padding: '14px', border: '1px solid rgba(74,222,128,.15)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-            <TrendingUp size={14} color="var(--green)" />
-            <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>Income</span>
-          </div>
-          <Amount value={income} size="md" />
-          <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>this month</p>
-        </div>
-        <div style={{ background: 'var(--bg2)', borderRadius: 14, padding: '14px', border: '1px solid rgba(248,113,113,.15)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-            <TrendingDown size={14} color="var(--red)" />
-            <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>Expenses</span>
-          </div>
-          <Amount value={expense} size="md" />
-          <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>this month</p>
+      {/* Income + Expense */}
+      <div style={{ marginBottom: 16 }}>
+        <SectionLabel>This Month</SectionLabel>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <button onClick={() => setRecurringModal('income')} style={{
+            background: 'var(--bg2)', borderRadius: 14, padding: '14px',
+            border: '1px solid rgba(74,222,128,.15)', textAlign: 'left', cursor: 'pointer',
+            transition: 'background .15s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg2)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <TrendingUp size={14} color="var(--green)" />
+              <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>Income</span>
+            </div>
+            <Amount value={income} size="md" />
+            <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>tap to view schedule</p>
+          </button>
+          <button onClick={() => setRecurringModal('expense')} style={{
+            background: 'var(--bg2)', borderRadius: 14, padding: '14px',
+            border: '1px solid rgba(248,113,113,.15)', textAlign: 'left', cursor: 'pointer',
+            transition: 'background .15s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg2)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <TrendingDown size={14} color="var(--red)" />
+              <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>Expenses</span>
+            </div>
+            <Amount value={expense} size="md" />
+            <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>tap to view schedule</p>
+          </button>
         </div>
       </div>
 
@@ -183,7 +401,7 @@ export function DashboardPage() {
       {/* Due this week */}
       {dueItems.length > 0 && (
         <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', padding: '16px', marginBottom: 16, border: '1px solid var(--border)' }}>
-          <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 14, marginBottom: 12, color: 'var(--text2)' }}>⚠️ Due This Week</h2>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 14, marginBottom: 12, color: 'var(--text2)' }}>⚠️ Due This Week</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {dueItems.map(r => {
               const days = differenceInDays(new Date(r.next_due_date), new Date())
@@ -204,7 +422,7 @@ export function DashboardPage() {
       {/* Recent Transactions */}
       <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', padding: '16px', border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <h2 style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Recent Transactions</h2>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 16 }}>Recent Transactions</h2>
           <button onClick={() => setAddTxnOpen(true)} style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'var(--indigo)', border: 'none', color: '#fff',
@@ -213,45 +431,59 @@ export function DashboardPage() {
             <Plus size={14} /> Add
           </button>
         </div>
-        {txnsLoading
-          ? <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>
-          : transactions.length === 0
-            ? <EmptyState icon={<TrendingUp size={22} />} title="No transactions yet" description="Add your first transaction" />
-            : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {transactions.map((t, i) => {
-                  const cat = CATEGORIES.find(c => c.key === t.category)
-                  return (
-                    <div key={t.id}
-                      onClick={() => setSelectedTxn(t)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '10px 0', cursor: 'pointer',
-                        borderBottom: i < transactions.length - 1 ? '1px solid var(--border)' : 'none',
-                      }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                        background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
-                      }}>
-                        {cat?.icon ?? '💳'}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text3)' }}>{format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}{t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}</p>
-                      </div>
-                      <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
-                    </div>
-                  )
-                })}
-              </div>
-            )
-        }
+        {txnsLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>
+        ) : txnsError ? (
+          <EmptyState icon={<TrendingUp size={22} />} title="Could not load transactions" description="Check your connection and try refreshing" />
+        ) : transactions.length === 0 ? (
+          <EmptyState icon={<TrendingUp size={22} />} title="No transactions yet" description="Add your first transaction" />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {transactions.map((t, i) => {
+              const cat = CATEGORIES.find(c => c.key === t.category)
+              return (
+                <div key={t.id}
+                  onClick={() => setSelectedTxn(t)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 0', cursor: 'pointer',
+                    borderBottom: i < transactions.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                    background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
+                  }}>
+                    {cat?.icon ?? '💳'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)' }}>{format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}{t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}</p>
+                  </div>
+                  <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
+      {/* Modals */}
       <AddTransactionModal open={addTxnOpen} onClose={() => setAddTxnOpen(false)} />
       <AddAccountModal open={addAcctOpen} onClose={() => setAddAcctOpen(false)} />
       <TransactionDetailModal txn={selectedTxn} onClose={() => setSelectedTxn(null)} />
+      <AccountTransactionsModal
+        account={selectedAccount}
+        open={!!selectedAccount}
+        onClose={() => setSelectedAccount(null)}
+      />
+      <RecurringSummaryModal
+        type={recurringModal ?? 'income'}
+        open={!!recurringModal}
+        onClose={() => setRecurringModal(null)}
+        recurringItems={recurring}
+        transactions={transactions}
+      />
     </div>
   )
 }

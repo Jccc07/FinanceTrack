@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--indigo)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Wallet size={18} color="#fff" />
           </div>
-          <span style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px' }}>FinTrack</span>
+          <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px' }}>FinTrack</span>
         </div>
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV.map(({ to, icon: Icon, label }) => (
@@ -97,7 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--indigo)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Wallet size={16} color="#fff" />
             </div>
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 17 }}>FinTrack</span>
+            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>FinTrack</span>
           </div>
           <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, display: 'flex' }}>
             <X size={20} />
@@ -146,15 +146,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── Main content ── */}
-      <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Mobile top bar */}
+      <main style={{ flex: 1, overflow: 'hidden', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Mobile top bar — outside scroll so it never moves */}
         <div className="mobile-only" style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 16px', borderBottom: '1px solid var(--border)',
-          background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 10,
-          flexShrink: 0,
+          background: 'var(--bg)', flexShrink: 0, zIndex: 10,
         }}>
-          <span style={{ fontFamily: 'var(--font-head)', fontWeight: 800, fontSize: 18 }}>FinTrack</span>
+          <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px' }}>FinTrack</span>
           <button
             onClick={() => setDrawerOpen(v => !v)}
             style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 10, cursor: 'pointer', color: 'var(--text2)', padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -178,6 +177,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
         background: 'var(--bg2)', borderTop: '1px solid var(--border)',
         display: 'flex', padding: '8px 0 max(8px, env(safe-area-inset-bottom))',
+        flexShrink: 0,
       }}>
         {NAV.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/'
