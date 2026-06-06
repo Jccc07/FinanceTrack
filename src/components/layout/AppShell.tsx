@@ -216,7 +216,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             z-index: 30;
             background: var(--bg2);
             border-top: 1px solid var(--border2);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-bottom: min(env(safe-area-inset-bottom), 20px);
           }
           .page-content { padding: 16px 16px 90px !important; }
           .mobile-top-bar {
