@@ -189,11 +189,13 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
     <div
       onClick={onClose}
       style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)',
+        position: 'fixed',
+        top: 0, left: 0, right: 0,
+        bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
+        background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(4px)',
         zIndex: 9999,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 16,
+        padding: '0 28px',
       }}
     >
       <div
@@ -201,15 +203,15 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
         className="scale-in"
         style={{
           background: 'var(--bg2)', border: '1px solid var(--border2)',
-          borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: width,
-          maxHeight: '80dvh', overflowY: 'auto',
-          padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,.5)',
+          borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: Math.min(width, 360),
+          maxHeight: '75dvh', overflowY: 'auto',
+          padding: '18px 18px 20px', boxShadow: '0 24px 64px rgba(0,0,0,.6)',
         }}
       >
         {title && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 18, fontWeight: 700 }}>{title}</h2>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, fontSize: 20, lineHeight: 1 }}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700 }}>{title}</h2>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, fontSize: 18, lineHeight: 1 }}>✕</button>
           </div>
         )}
         {children}
