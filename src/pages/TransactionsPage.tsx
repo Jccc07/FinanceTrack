@@ -41,13 +41,18 @@ export function TransactionsPage() {
 
   return (
     <div className="fade-in">
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800 }}>Transactions</h1>
-        <button onClick={() => setAddOpen(true)} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'var(--indigo)', border: 'none', color: '#fff',
-          borderRadius: 12, padding: '9px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        }}>
+        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>Transactions</h1>
+        <button
+          onClick={() => setAddOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'var(--indigo)', border: 'none', color: '#fff',
+            borderRadius: 12, padding: '9px 16px', fontSize: 14, fontWeight: 600,
+            cursor: 'pointer', letterSpacing: '-0.1px',
+          }}
+        >
           <Plus size={15} /> Add
         </button>
       </div>
@@ -55,20 +60,49 @@ export function TransactionsPage() {
       {/* Month nav */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', padding: '12px 8px',
-        marginBottom: 12, border: '1px solid var(--border)',
+        background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', padding: '10px 8px',
+        marginBottom: 12, border: '1px solid var(--border2)',
       }}>
-        <button onClick={() => setMonth(m => subMonths(m, 1))} style={{ background: 'var(--bg3)', border: 'none', cursor: 'pointer', color: 'var(--text2)', padding: 8, borderRadius: 10, display: 'flex' }}>
+        <button
+          onClick={() => setMonth(m => subMonths(m, 1))}
+          style={{ background: 'var(--bg3)', border: 'none', cursor: 'pointer', color: 'var(--text2)', padding: 8, borderRadius: 10, display: 'flex' }}
+        >
           <ChevronLeft size={18} />
         </button>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{format(month, 'MMMM yyyy')}</p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 4 }}>
-            <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}>+₱{income.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-            <span style={{ fontSize: 12, color: 'var(--red)', fontWeight: 600 }}>-₱{expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+
+        <div style={{ textAlign: 'center', flex: 1 }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 15, letterSpacing: '-0.2px' }}>
+            {format(month, 'MMMM yyyy')}
+          </p>
+          {/* Cash in / Cash out pill containers */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 7 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'rgba(74,222,128,.1)', border: '1px solid rgba(74,222,128,.2)',
+              borderRadius: 20, padding: '3px 10px',
+            }}>
+              <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 500, opacity: 0.8 }}>IN</span>
+              <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700 }}>
+                +₱{income.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.2)',
+              borderRadius: 20, padding: '3px 10px',
+            }}>
+              <span style={{ fontSize: 11, color: 'var(--red)', fontWeight: 500, opacity: 0.8 }}>OUT</span>
+              <span style={{ fontSize: 12, color: 'var(--red)', fontWeight: 700 }}>
+                -₱{expense.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
           </div>
         </div>
-        <button onClick={() => setMonth(m => addMonths(m, 1))} style={{ background: 'var(--bg3)', border: 'none', cursor: 'pointer', color: 'var(--text2)', padding: 8, borderRadius: 10, display: 'flex' }}>
+
+        <button
+          onClick={() => setMonth(m => addMonths(m, 1))}
+          style={{ background: 'var(--bg3)', border: 'none', cursor: 'pointer', color: 'var(--text2)', padding: 8, borderRadius: 10, display: 'flex' }}
+        >
           <ChevronRight size={18} />
         </button>
       </div>
@@ -100,10 +134,10 @@ export function TransactionsPage() {
           ? <EmptyState icon={<Search size={22} />} title="No transactions" description="Try adjusting your filters" action={<Button onClick={() => setAddOpen(true)}><Plus size={14} /> Add transaction</Button>} />
           : sortedDates.map(date => (
             <div key={date} style={{ marginBottom: 14 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-body)' }}>
                 {format(new Date(date + 'T00:00:00'), 'EEE, MMM d')}
               </p>
-              <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border)' }}>
+              <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border2)' }}>
                 {grouped[date].map((t, i) => {
                   const cat = CATEGORIES.find(c => c.key === t.category)
                   return (
@@ -124,8 +158,8 @@ export function TransactionsPage() {
                         {cat?.icon ?? '💳'}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.1px' }}>{cat?.label ?? t.category}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {accountMap[t.account_id] ?? '—'}{t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}
                         </p>
                       </div>

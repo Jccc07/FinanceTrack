@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { useCreateTransaction } from '@/hooks/useTransactions'
 import { useAccounts } from '@/hooks/useAccounts'
 import { CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/constants/categories'
-import { Modal, Button, Input, Select } from '@/components/ui'
+import { Modal, Input, Select } from '@/components/ui'
 
 interface Props { open: boolean; onClose: () => void }
 
@@ -41,13 +41,24 @@ export function AddTransactionModal({ open, onClose }: Props) {
     }
   }
 
+  /* shared button base */
+  const btnBase: React.CSSProperties = {
+    flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
+    cursor: 'pointer', fontSize: 14, fontWeight: 600,
+    fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
+    transition: 'opacity .15s, background .15s',
+  }
+
   return (
     <Modal open={open} onClose={() => { reset(); onClose() }} title="Add Transaction">
-      <div style={{ display: 'flex', background: 'var(--bg)', borderRadius: 10, padding: 4, marginBottom: 20 }}>
+
+      {/* Type toggle */}
+      <div style={{ display: 'flex', background: 'var(--bg)', borderRadius: 12, padding: 4, marginBottom: 20, border: '1px solid var(--border2)' }}>
         {(['expense', 'income'] as const).map(t => (
           <button key={t} onClick={() => { setType(t); setCategory('') }}
             style={{
-              flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all .15s',
+              flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', transition: 'all .15s',
               background: type === t ? (t === 'expense' ? 'var(--red)' : 'var(--green)') : 'transparent',
               color: type === t ? '#fff' : 'var(--text3)',
             }}>
@@ -77,10 +88,39 @@ export function AddTransactionModal({ open, onClose }: Props) {
         <Input label="Date" type="date" value={date} onChange={e => setDate(e.target.value)} required />
         <Input label="Note (optional)" placeholder="Optional description" value={note} onChange={e => setNote(e.target.value)} />
 
-        {error && <p style={{ fontSize: 13, color: 'var(--red)' }}>{error}</p>}
+        {error && <p style={{ fontSize: 13, color: 'var(--red)', fontFamily: 'var(--font-body)' }}>{error}</p>}
+
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-          <Button type="button" variant="secondary" fullWidth onClick={() => { reset(); onClose() }}>Cancel</Button>
-          <Button type="submit" fullWidth loading={loading}>Add transaction</Button>
+          {/* Cancel */}
+          <button
+            type="button"
+            onClick={() => { reset(); onClose() }}
+            style={{
+              ...btnBase,
+              background: 'var(--bg3)',
+              color: 'var(--text2)',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            Cancel
+          </button>
+
+          {/* Add Transaction */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              ...btnBase,
+              background: 'var(--indigo)',
+              color: '#fff',
+              opacity: loading ? 0.7 : 1,
+            }}
+            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            {loading ? 'Adding…' : 'Add Transaction'}
+          </button>
         </div>
       </form>
     </Modal>

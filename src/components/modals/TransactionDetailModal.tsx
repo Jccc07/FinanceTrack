@@ -1,9 +1,10 @@
 import React from 'react'
 import { format } from 'date-fns'
+import { Trash2 } from 'lucide-react'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useDeleteTransaction } from '@/hooks/useTransactions'
 import { CATEGORIES } from '@/constants/categories'
-import { Modal, Amount, Button } from '@/components/ui'
+import { Modal, Amount } from '@/components/ui'
 
 interface Props { txn: any; onClose: () => void }
 
@@ -36,11 +37,13 @@ export function TransactionDetailModal({ txn, onClose }: Props) {
             {cat?.icon ?? '💳'}
           </div>
           <Amount value={txn.type === 'expense' ? -Number(txn.amount) : Number(txn.amount)} size="xl" showSign />
-          <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>{cat?.label ?? txn.category}</p>
+          <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>
+            {cat?.label ?? txn.category}
+          </p>
         </div>
 
         {/* Details */}
-        <div style={{ background: 'var(--bg)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border2)' }}>
           {[
             { label: 'Type', value: txn.type.charAt(0).toUpperCase() + txn.type.slice(1) },
             { label: 'Date', value: format(new Date(txn.txn_date + 'T00:00:00'), 'MMMM d, yyyy') },
@@ -52,15 +55,31 @@ export function TransactionDetailModal({ txn, onClose }: Props) {
               padding: '11px 14px',
               borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
             }}>
-              <span style={{ fontSize: 13, color: 'var(--text3)' }}>{row.label}</span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', textAlign: 'right', maxWidth: '60%' }}>{row.value}</span>
+              <span style={{ fontSize: 13, color: 'var(--text3)', fontFamily: 'var(--font-body)' }}>{row.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--text)', textAlign: 'right', maxWidth: '60%' }}>{row.value}</span>
             </div>
           ))}
         </div>
 
-        <Button variant="danger" fullWidth onClick={handleDelete}>
+        {/* Delete — subtle ghost button with icon */}
+        <button
+          onClick={handleDelete}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '11px 0',
+            background: 'rgba(248,113,113,.08)',
+            border: '1px solid rgba(248,113,113,.18)',
+            borderRadius: 12, cursor: 'pointer',
+            color: 'var(--red)', fontSize: 13, fontWeight: 600,
+            fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
+            transition: 'background .15s, border-color .15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(248,113,113,.15)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(248,113,113,.08)' }}
+        >
+          <Trash2 size={14} />
           Delete transaction
-        </Button>
+        </button>
       </div>
     </Modal>
   )
