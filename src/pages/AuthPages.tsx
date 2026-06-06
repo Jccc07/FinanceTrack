@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, User, Wallet, Eye, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { Button, Input, Spinner } from '@/components/ui'
+import { Input, Spinner } from '@/components/ui'
 
 function AuthShell({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle: string }) {
   return (
@@ -19,7 +19,7 @@ function AuthShell({ children, title, subtitle }: { children: React.ReactNode; t
           }}>
             <Wallet size={24} color="#fff" />
           </div>
-          <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 26, fontWeight: 800, marginBottom: 6 }}>{title}</h1>
+          <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 6 }}>{title}</h1>
           <p style={{ color: 'var(--text3)', fontSize: 14 }}>{subtitle}</p>
         </div>
 
@@ -77,9 +77,28 @@ export function LoginPage() {
           required
         />
         {error && <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{error}</p>}
-        <Button type="submit" fullWidth loading={loading} style={{ marginTop: 4 }}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            marginTop: 4, width: '100%', padding: '12px 20px',
+            background: 'var(--indigo)', color: '#fff',
+            border: 'none', borderRadius: 12,
+            fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-body)',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'background .15s, transform .1s',
+            boxShadow: '0 2px 12px rgba(99,102,241,0.35)',
+          }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#818CF8' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--indigo)' }}
+          onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.98)' }}
+          onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+        >
+          {loading && <Spinner size={14} />}
           Sign in
-        </Button>
+        </button>
         <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text3)' }}>
           Don't have an account?{' '}
           <Link to="/register" style={{ color: 'var(--indigo-l)', textDecoration: 'none', fontWeight: 600 }}>Create one</Link>
@@ -139,9 +158,28 @@ export function RegisterPage() {
           required
         />
         {error && <p style={{ fontSize: 13, color: 'var(--red)', textAlign: 'center' }}>{error}</p>}
-        <Button type="submit" fullWidth loading={loading} style={{ marginTop: 4 }}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            marginTop: 4, width: '100%', padding: '12px 20px',
+            background: 'var(--indigo)', color: '#fff',
+            border: 'none', borderRadius: 12,
+            fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-body)',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'background .15s, transform .1s',
+            boxShadow: '0 2px 12px rgba(99,102,241,0.35)',
+          }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#818CF8' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--indigo)' }}
+          onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.98)' }}
+          onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+        >
+          {loading && <Spinner size={14} />}
           Create account
-        </Button>
+        </button>
         <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text3)' }}>
           Already have an account?{' '}
           <Link to="/login" style={{ color: 'var(--indigo-l)', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
