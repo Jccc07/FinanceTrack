@@ -91,10 +91,11 @@ function AccountTransactionsModal({ account, open, onClose }: { account: any; op
           <EmptyState icon={<TrendingUp size={20} />} title="No transactions this month" description="Transactions for this account will appear here" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {txns.map((t, i) => {
+            {txns.slice(0, 5).map((t, i) => {
               const cat = CATEGORIES.find(c => c.key === t.category)
+              const slice = txns.slice(0, 5)
               return (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < txns.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < slice.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <AccountLogoIcon accountName={account.name} colorHex={account.color_hex} size={36} borderRadius={10} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
@@ -109,7 +110,9 @@ function AccountTransactionsModal({ account, open, onClose }: { account: any; op
             })}
           </div>
         )}
-        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>For full history, visit the Transactions page</p>
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
+          {txns.length > 5 ? `Showing 5 of ${txns.length} transactions · ` : ''}For full history, visit the Transactions page
+        </p>
       </div>
     </Modal>
   )
@@ -172,10 +175,11 @@ function RecurringSummaryModal({ type, open, onClose, recurringItems, transactio
               All {type === 'income' ? 'Income' : 'Expenses'} This Month
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {allActual.map((t, i) => {
+              {allActual.slice(0, 5).map((t, i) => {
                 const cat = CATEGORIES.find(c => c.key === t.category)
+                const slicedActual = allActual.slice(0, 5)
                 return (
-                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < allActual.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < slicedActual.length - 1 ? '1px solid var(--border)' : 'none' }}>
                     <div style={{
                       width: 34, height: 34, borderRadius: 9, flexShrink: 0,
                       background: type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
@@ -238,7 +242,9 @@ function RecurringSummaryModal({ type, open, onClose, recurringItems, transactio
           <EmptyState icon={<TrendingUp size={20} />} title={`No ${type === 'income' ? 'income' : 'expenses'} yet`} description={`Add transactions or recurring items to see them here`} />
         )}
 
-        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>Manage recurring items in the Recurring page</p>
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
+          {allActual.length > 5 ? `Showing 5 of ${allActual.length} · ` : ''}Visit Transactions page for full history
+        </p>
       </div>
     </Modal>
   )
@@ -263,6 +269,7 @@ export function DashboardPage() {
   const totalBalance = useTotalBalance()
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts()
   const { data: transactions = [], isLoading: txnsLoading, isError: txnsError } = useTransactions({ month: new Date(), limit: 10 })
+  const recentTxns = transactions.slice(0, 10)
   const nextPayday = useNextPayday()
   const { data: recurring = [] } = useAllRecurringItems()
 
@@ -417,13 +424,13 @@ export function DashboardPage() {
           <EmptyState icon={<TrendingUp size={22} />} title="No transactions yet" description="Add your first transaction" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {transactions.map((t, i) => {
+            {recentTxns.map((t, i) => {
               const cat = CATEGORIES.find(c => c.key === t.category)
               const acct = accountMap[t.account_id]
               return (
                 <div key={t.id}
                   onClick={() => setSelectedTxn(t)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer', borderBottom: i < transactions.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer', borderBottom: i < recentTxns.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   {/* Account logo instead of category emoji */}
                   {acct ? (
                     <AccountLogoIcon accountName={acct.name} colorHex={acct.color_hex ?? undefined} size={38} borderRadius={10} />
@@ -446,6 +453,11 @@ export function DashboardPage() {
               )
             })}
           </div>
+        )}
+        {transactions.length > 0 && (
+          <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 12 }}>
+            Showing {recentTxns.length} most recent · Visit Transactions page for full history
+          </p>
         )}
       </div>
 

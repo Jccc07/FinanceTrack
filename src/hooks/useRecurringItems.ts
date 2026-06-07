@@ -225,6 +225,12 @@ export function useEntryPaidStatus(entryId: string, monthKey: string) {
     queryKey: [...ENTRY_PAID_KEY, userId, entryId, monthKey],
     queryFn: () => getEntryPaidTxnForMonth(userId!, entryId, monthKey),
     enabled: !!userId && !!entryId,
+    // Keep showing existing data while refetching — prevents the checkbox
+    // from flickering back to unchecked state during background refetches
+    placeholderData: (prev: any) => prev,
+    // Treat as fresh for 30s so a navigation back doesn't trigger an
+    // unnecessary refetch that could cause a visible loading flash
+    staleTime: 30_000,
   })
 }
 

@@ -457,10 +457,13 @@ function EntryRow({
   const [markOpen, setMarkOpen] = useState(false)
   const [removing, setRemoving] = useState(false)
 
-  const { data: paidTxnId, isLoading: checking } = useEntryPaidStatus(entry.id, monthKey)
+  const { data: paidTxnId, isLoading: isInitialLoading } = useEntryPaidStatus(entry.id, monthKey)
   const isPaid = !!paidTxnId
 
   const canCheck = isCurrentMo
+  // Only block interaction on first load — not on background refetches.
+  // This prevents the checkbox from becoming un-clickable after marking paid.
+  const checking = isInitialLoading
 
   const handleCheck = () => {
     if (!canCheck || checking) return

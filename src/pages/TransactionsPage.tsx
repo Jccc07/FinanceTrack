@@ -12,7 +12,7 @@ import { TransactionDetailModal } from '@/components/modals/TransactionDetailMod
 export function TransactionsPage() {
   const [month, setMonth]       = useState(new Date())
   const [search, setSearch]     = useState('')
-  const [filterCat, setFilterCat] = useState('')
+  const [filterAccount, setFilterAccount] = useState('')
   const [filterType, setFilterType] = useState<'income' | 'expense' | ''>('')
   const [addOpen, setAddOpen]   = useState(false)
   const [selectedTxn, setSelectedTxn] = useState<any>(null)
@@ -23,10 +23,10 @@ export function TransactionsPage() {
   const accountMap = Object.fromEntries(accounts.map(a => [a.id, a]))
 
   const filtered = transactions.filter(t => {
-    const matchSearch = !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note ?? '').toLowerCase().includes(search.toLowerCase())
-    const matchCat    = !filterCat || t.category === filterCat
-    const matchType   = !filterType || t.type === filterType
-    return matchSearch && matchCat && matchType
+    const matchSearch = !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note ?? '').toLowerCase().includes(search.toLowerCase()) || (accountMap[t.account_id]?.name ?? '').toLowerCase().includes(search.toLowerCase())
+    const matchAccount = !filterAccount || t.account_id === filterAccount
+    const matchType    = !filterType || t.type === filterType
+    return matchSearch && matchAccount && matchType
   })
 
   const income  = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
@@ -121,9 +121,9 @@ export function TransactionsPage() {
             <option value="income">Income</option>
             <option value="expense">Expense</option>
           </Select>
-          <Select value={filterCat} onChange={e => setFilterCat(e.target.value)}>
-            <option value="">All categories</option>
-            {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
+          <Select value={filterAccount} onChange={e => setFilterAccount(e.target.value)}>
+            <option value="">All accounts</option>
+            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </Select>
         </div>
       </div>
