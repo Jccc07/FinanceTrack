@@ -9,8 +9,8 @@ import { useAuthStore } from '@/stores/authStore'
 const NAV = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/transactions', icon: ArrowLeftRight,  label: 'Transactions' },
-  { to: '/analytics',   icon: BarChart2,       label: 'Analytics' },
   { to: '/recurring',   icon: RefreshCcw,      label: 'Recurring' },
+  { to: '/analytics',   icon: BarChart2,       label: 'Analytics' },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {

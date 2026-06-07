@@ -176,6 +176,9 @@ export function EmptyState({ icon, title, description, action }: {
 export function Modal({ open, onClose, title, children, width = 480 }: {
   open: boolean; onClose: () => void; title?: string; children: React.ReactNode; width?: number
 }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [isScrollable, setIsScrollable] = React.useState(false)
+
   React.useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -186,6 +189,16 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
       document.body.classList.remove('modal-open')
     }
   }, [open, onClose])
+
+  React.useEffect(() => {
+    if (!open) return
+    const check = () => {
+      const el = scrollRef.current
+      if (el) setIsScrollable(el.scrollHeight > el.clientHeight + 4)
+    }
+    const t = setTimeout(check, 80)
+    return () => clearTimeout(t)
+  }, [open, children])
 
   if (!open) return null
 
@@ -211,7 +224,7 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
           boxShadow: '0 24px 64px rgba(0,0,0,.6)',
         }}
       >
-        <div style={{
+        <div ref={scrollRef} style={{
           background: 'var(--bg2)', border: '1px solid var(--border2)',
           borderRadius: 'var(--radius-lg)', width: '100%',
           maxHeight: '75dvh', overflowY: 'auto',
@@ -227,12 +240,14 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
           )}
           {children}
         </div>
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
-          background: 'linear-gradient(to bottom, transparent, rgba(22,24,32,.85))',
-          borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
-          pointerEvents: 'none',
-        }} />
+        {isScrollable && (
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
+            background: 'linear-gradient(to bottom, transparent, rgba(22,24,32,.85))',
+            borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
+            pointerEvents: 'none',
+          }} />
+        )}
       </div>
     </div>,
     document.body

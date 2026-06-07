@@ -50,6 +50,7 @@ function AddEntryModal({
   open: boolean; onClose: () => void; monthKey: string; prefill?: Partial<MonthEntry>
 }) {
   const addEntry = useAddMonthEntry()
+  const { data: accounts = [] } = useAccounts()
 
   // Step 1: cash flow direction (expense = bill/sub/installment, income)
   const [cashFlow, setCashFlow] = useState<'expense' | 'income'>('expense')
@@ -62,6 +63,7 @@ function AddEntryModal({
     installment_total: '',
     due_date: '',
     auto_check: false,
+    auto_check_account_id: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -69,7 +71,7 @@ function AddEntryModal({
   useEffect(() => {
     if (!open) {
       setCashFlow('expense')
-      setF({ name: '', amount: '', category: '', frequency: 'monthly', item_type: 'bill', installment_total: '', due_date: '', auto_check: false })
+      setF({ name: '', amount: '', category: '', frequency: 'monthly', item_type: 'bill', installment_total: '', due_date: '', auto_check: false, auto_check_account_id: '' })
       setError(''); setLoading(false)
     }
     if (open && prefill) {
@@ -84,6 +86,7 @@ function AddEntryModal({
         installment_total: prefill.installment_total?.toString() ?? '',
         due_date: '',
         auto_check: false,
+        auto_check_account_id: '',
       })
     }
   }, [open])
@@ -98,6 +101,9 @@ function AddEntryModal({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setLoading(true)
+    if (f.auto_check && !f.auto_check_account_id) {
+      setError('Please select an account for auto-check'); setLoading(false); return
+    }
     try {
       await addEntry.mutateAsync({
         month_key: monthKey,
@@ -205,7 +211,7 @@ function AddEntryModal({
             </div>
             <button
               type="button"
-              onClick={() => setF(p => ({ ...p, auto_check: !p.auto_check }))}
+              onClick={() => setF(p => ({ ...p, auto_check: !p.auto_check, auto_check_account_id: p.auto_check ? '' : p.auto_check_account_id }))}
               style={{
                 width: 44, height: 24, borderRadius: 99, border: 'none',
                 cursor: 'pointer', transition: 'background .2s', flexShrink: 0,
@@ -222,6 +228,20 @@ function AddEntryModal({
               }} />
             </button>
           </div>
+        )}
+
+        {/* Account selection for auto-check */}
+        {f.due_date && f.auto_check && (
+          <Select
+            label="Account to debit/credit automatically"
+            value={f.auto_check_account_id}
+            onChange={e => setF(p => ({ ...p, auto_check_account_id: e.target.value }))}
+          >
+            <option value="">Select account…</option>
+            {accounts.map(a => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </Select>
         )}
 
         {error && <p style={{ fontSize: 13, color: 'var(--red)', fontFamily: 'var(--font-body)' }}>{error}</p>}
@@ -254,9 +274,9 @@ function AddEntryModal({
 // ─── Mark Paid Modal ─────────────────────────────────────────────────────────
 
 function MarkPaidModal({
-  open, onClose, entry, monthKey,
+  open, onClose, entry, monthKey, onSuccess,
 }: {
-  open: boolean; onClose: () => void; entry: MonthEntry | null; monthKey: string
+  open: boolean; onClose: () => void; entry: MonthEntry | null; monthKey: string; onSuccess: () => void
 }) {
   const { data: accounts = [] } = useAccounts()
   const markPaid = useMarkEntryPaid()
@@ -273,6 +293,7 @@ function MarkPaidModal({
     setLoading(true)
     try {
       await markPaid.mutateAsync({ entry, accountId, monthKey })
+      onSuccess()
       onClose()
     } finally { setLoading(false) }
   }
@@ -293,22 +314,14 @@ function MarkPaidModal({
           ))}
         </Select>
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{ ...btnBase, background: 'var(--bg3)', color: 'var(--text2)' }}
+          <button type="button" onClick={onClose} style={{ ...btnBase, background: 'var(--bg3)', color: 'var(--text2)' }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
-          >
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{ ...btnBase, background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1 }}
+          <button type="submit" disabled={loading} style={{ ...btnBase, background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1 }}
             onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
-            onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
-          >
+            onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}>
             {loading ? 'Confirming…' : 'Confirm'}
           </button>
         </div>
@@ -449,6 +462,7 @@ function EntryRow({
 
   useEffect(() => {
     if (!userId) return
+    setChecking(true)
     getEntryPaidTxnForMonth(userId, entry.id, monthKey).then(txnId => {
       setIsPaid(!!txnId); setChecking(false)
     })
@@ -556,7 +570,8 @@ function EntryRow({
 
       <MarkPaidModal
         open={markOpen}
-        onClose={() => { setMarkOpen(false); setIsPaid(true) }}
+        onClose={() => setMarkOpen(false)}
+        onSuccess={() => setIsPaid(true)}
         entry={entry}
         monthKey={monthKey}
       />

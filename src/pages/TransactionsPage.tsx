@@ -5,6 +5,7 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { useAccounts } from '@/hooks/useAccounts'
 import { CATEGORIES } from '@/constants/categories'
 import { Card, Button, Amount, EmptyState, Spinner, Select, Input } from '@/components/ui'
+import { AccountLogoIcon } from '@/components/ui/AccountLogoIcon'
 import { AddTransactionModal } from '@/components/modals/AddTransactionModal'
 import { TransactionDetailModal } from '@/components/modals/TransactionDetailModal'
 
@@ -19,7 +20,7 @@ export function TransactionsPage() {
   const { data: transactions = [], isLoading } = useTransactions({ month })
   const { data: accounts = [] } = useAccounts()
 
-  const accountMap = Object.fromEntries(accounts.map(a => [a.id, a.name]))
+  const accountMap = Object.fromEntries(accounts.map(a => [a.id, a]))
 
   const filtered = transactions.filter(t => {
     const matchSearch = !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note ?? '').toLowerCase().includes(search.toLowerCase())
@@ -140,6 +141,7 @@ export function TransactionsPage() {
               <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border2)' }}>
                 {grouped[date].map((t, i) => {
                   const cat = CATEGORIES.find(c => c.key === t.category)
+                  const acct = accountMap[t.account_id]
                   return (
                     <div key={t.id}
                       onClick={() => setSelectedTxn(t)}
@@ -150,17 +152,24 @@ export function TransactionsPage() {
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.03)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                        background: t.type === 'income' ? 'rgba(74,222,128,.1)' : 'rgba(248,113,113,.1)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
-                      }}>
-                        {cat?.icon ?? '💳'}
-                      </div>
+                      {/* Account logo as icon */}
+                      {acct ? (
+                        <AccountLogoIcon accountName={acct.name} colorHex={acct.color_hex ?? undefined} size={38} borderRadius={10} />
+                      ) : (
+                        <div style={{
+                          width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                          background: t.type === 'income' ? 'rgba(74,222,128,.1)' : 'rgba(248,113,113,.1)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
+                        }}>
+                          {cat?.icon ?? '💳'}
+                        </div>
+                      )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.1px' }}>{cat?.label ?? t.category}</p>
+                        <p style={{ fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.1px' }}>
+                          {acct?.name ?? (cat?.label ?? t.category)}
+                        </p>
                         <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {accountMap[t.account_id] ?? '—'}{t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}
+                          {cat?.label ?? t.category}{t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
                         </p>
                       </div>
                       <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />

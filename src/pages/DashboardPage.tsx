@@ -8,13 +8,11 @@ import { useNextPayday } from '@/hooks/useIncomeSchedules'
 import { useAllRecurringItems } from '@/hooks/useRecurringItems'
 import { CATEGORIES } from '@/constants/categories'
 import { Amount, EmptyState, Spinner, Modal, Input, Select, Button } from '@/components/ui'
+import { AccountLogoIcon } from '@/components/ui/AccountLogoIcon'
 import { AddTransactionModal } from '@/components/modals/AddTransactionModal'
 import { TransactionDetailModal } from '@/components/modals/TransactionDetailModal'
 
 const ACCOUNT_COLORS = ['#6366F1','#4ADE80','#F87171','#FBBF24','#34D399','#60A5FA','#A78BFA','#FB923C']
-const ACCOUNT_TYPE_ICONS: Record<string, string> = {
-  ewallet: '📱', bank: '🏦', cash: '💵', credit: '💳', savings: '🏦', other: '💼',
-}
 
 // ─── Add Account Modal ────────────────────────────────────────────────────────
 function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -43,7 +41,7 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
         <Input label="Current balance (₱)" type="number" placeholder="0.00" value={balance} onChange={e => setBalance(e.target.value)} />
         <Select label="Type" value={type} onChange={e => setType(e.target.value)}>
           {['bank','ewallet','cash','credit','savings','other'].map(t => (
-            <option key={t} value={t}>{ACCOUNT_TYPE_ICONS[t]} {t.charAt(0).toUpperCase() + t.slice(1)}</option>
+            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
           ))}
         </Select>
         <div>
@@ -59,36 +57,14 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
         </div>
         {error && <p style={{ fontSize: 13, color: 'var(--red)' }}>{error}</p>}
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
-              cursor: 'pointer', fontSize: 14, fontWeight: 600,
-              fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
-              background: 'var(--bg3)', color: 'var(--text2)', transition: 'opacity .15s',
-            }}
+          <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', background: 'var(--bg3)', color: 'var(--text2)', transition: 'opacity .15s' }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={loading}
-            style={{
-              flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 600,
-              fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
-              background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1,
-              transition: 'opacity .15s',
-            }}
+          >Cancel</button>
+          <button type="button" onClick={submit} disabled={loading} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1, transition: 'opacity .15s' }}
             onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
             onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
-          >
-            {loading ? 'Adding…' : 'Add account'}
-          </button>
+          >{loading ? 'Adding…' : 'Add account'}</button>
         </div>
       </div>
     </Modal>
@@ -97,28 +73,18 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
 
 // ─── Account Transactions Modal ───────────────────────────────────────────────
 function AccountTransactionsModal({ account, open, onClose }: { account: any; open: boolean; onClose: () => void }) {
-  const { data: txns = [], isLoading } = useTransactions({
-    month: new Date(),
-    accountId: account?.id,
-  })
-
+  const { data: txns = [], isLoading } = useTransactions({ month: new Date(), accountId: account?.id })
   if (!account) return null
-
   return (
     <Modal open={open} onClose={onClose} title={`${account.name} — ${format(new Date(), 'MMMM yyyy')}`} width={440}>
       <div>
-        {/* Account balance header */}
-        <div style={{
-          background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px',
-          marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+        <div style={{ background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: account.color_hex ?? 'var(--indigo)' }} />
             <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Current balance</span>
           </div>
           <Amount value={Number(account.balance)} size="md" />
         </div>
-
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><Spinner /></div>
         ) : txns.length === 0 ? (
@@ -128,25 +94,13 @@ function AccountTransactionsModal({ account, open, onClose }: { account: any; op
             {txns.map((t, i) => {
               const cat = CATEGORIES.find(c => c.key === t.category)
               return (
-                <div key={t.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 0',
-                  borderBottom: i < txns.length - 1 ? '1px solid var(--border)' : 'none',
-                }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                    background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-                  }}>
-                    {cat?.icon ?? '💳'}
-                  </div>
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < txns.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <AccountLogoIcon accountName={account.name} colorHex={account.color_hex} size={36} borderRadius={10} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {cat?.label ?? t.category}
-                    </p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
                     <p style={{ fontSize: 11, color: 'var(--text3)' }}>
                       {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
-                      {t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}
+                      {t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
                     </p>
                   </div>
                   <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
@@ -155,9 +109,7 @@ function AccountTransactionsModal({ account, open, onClose }: { account: any; op
             })}
           </div>
         )}
-        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
-          For full history, visit the Transactions page
-        </p>
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>For full history, visit the Transactions page</p>
       </div>
     </Modal>
   )
@@ -171,104 +123,122 @@ function RecurringSummaryModal({ type, open, onClose, recurringItems, transactio
   recurringItems: any[]
   transactions: any[]
 }) {
-  const monthStr = format(new Date(), 'yyyy-MM')
   const items = recurringItems.filter(r =>
     type === 'income' ? r.item_type === 'income' : r.item_type !== 'income'
   )
 
-  // Determine which items are paid this month by checking if a transaction
-  // with the recurring item's rid tag exists in the current month's transactions
+  // Check paid status via __meid: tag (month entry) OR __rid: tag (legacy)
   const paidIds = new Set(
     transactions
       .map(t => {
-        const match = t.note?.match(/__rid:([^_]+)__/)
-        return match ? match[1] : null
+        const meidMatch = t.note?.match(/__meid:([^_]+)__/)
+        const ridMatch = t.note?.match(/__rid:([^_]+)__/)
+        return meidMatch?.[1] ?? ridMatch?.[1] ?? null
       })
       .filter(Boolean)
   )
 
   const title = type === 'income' ? 'Expected Income' : 'Expected Expenses'
-  const accentColor = type === 'income' ? 'var(--green)' : 'var(--red)'
   const total = items.reduce((s, r) => s + Number(r.amount), 0)
   const paidTotal = items.filter(r => paidIds.has(r.id)).reduce((s, r) => s + Number(r.amount), 0)
+
+  // Also include all actual income/expense transactions from this month (not just recurring)
+  const allActual = transactions.filter(t => type === 'income' ? t.type === 'income' : t.type === 'expense')
+  const actualTotal = allActual.reduce((s, t) => s + Number(t.amount), 0)
 
   return (
     <Modal open={open} onClose={onClose} title={`${title} — ${format(new Date(), 'MMMM yyyy')}`} width={440}>
       <div>
         {/* Summary bar */}
-        <div style={{
-          background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px',
-          marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
+        <div style={{ background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>
-              {paidIds.size > 0
-                ? `${items.filter(r => paidIds.has(r.id)).length} of ${items.length} ${type === 'income' ? 'received' : 'paid'}`
-                : `${items.length} item${items.length !== 1 ? 's' : ''} scheduled`}
+              {type === 'income' ? 'Total received this month' : 'Total spent this month'}
             </p>
-            <Amount value={paidTotal} size="md" />
-            {total !== paidTotal && (
+            <Amount value={actualTotal} size="md" />
+            {items.length > 0 && total !== paidTotal && (
               <p style={{ fontSize: 11, color: 'var(--text4)', marginTop: 1 }}>
-                of ₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2 })} total
+                ₱{paidTotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })} from {items.filter(r => paidIds.has(r.id)).length} recurring · ₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2 })} scheduled
               </p>
             )}
           </div>
           <div style={{ fontSize: 22 }}>{type === 'income' ? '💰' : '📋'}</div>
         </div>
 
-        {items.length === 0 ? (
-          <EmptyState
-            icon={<TrendingUp size={20} />}
-            title={`No scheduled ${type === 'income' ? 'income' : 'expenses'}`}
-            description={`Add recurring items in the Recurring page`}
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {items.map((r, i) => {
-              const isPaid = paidIds.has(r.id)
-              const cat = CATEGORIES.find(c => c.key === r.category)
-              return (
-                <div key={r.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '10px 0',
-                  borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
-                  opacity: isPaid ? 0.55 : 1,
-                }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                    background: type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-                  }}>
-                    {cat?.icon ?? (type === 'income' ? '💰' : '📋')}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{
-                      fontSize: 13, fontWeight: 600, color: 'var(--text)',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      textDecoration: isPaid ? 'line-through' : 'none',
+        {/* Non-recurring transactions this month */}
+        {allActual.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              All {type === 'income' ? 'Income' : 'Expenses'} This Month
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {allActual.map((t, i) => {
+                const cat = CATEGORIES.find(c => c.key === t.category)
+                return (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < allActual.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                      background: type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
                     }}>
-                      {r.name}
-                    </p>
-                    <p style={{ fontSize: 11, color: isPaid ? 'var(--green)' : 'var(--text3)', textDecoration: isPaid ? 'line-through' : 'none' }}>
-                      {isPaid
-                        ? (type === 'income' ? 'Received' : 'Paid')
-                        : `Due ${format(new Date(r.next_due_date + 'T00:00:00'), 'MMM d')}`}
-                    </p>
+                      {cat?.icon ?? (type === 'income' ? '💵' : '💸')}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text3)' }}>
+                        {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
+                        {t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
+                      </p>
+                    </div>
+                    <Amount value={Number(t.amount)} size="sm" />
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <Amount value={Number(r.amount)} size="sm" />
-                    {isPaid && (
-                      <p style={{ fontSize: 10, color: 'var(--green)', marginTop: 1 }}>✓ done</p>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )}
-        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
-          Manage recurring items in the Recurring page
-        </p>
+
+        {/* Recurring schedule */}
+        {items.length > 0 && (
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              Recurring Schedule
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {items.map((r, i) => {
+                const isPaid = paidIds.has(r.id)
+                const cat = CATEGORIES.find(c => c.key === r.category)
+                return (
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none', opacity: isPaid ? 0.55 : 1 }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                      background: type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+                    }}>
+                      {cat?.icon ?? (type === 'income' ? '💰' : '📋')}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: isPaid ? 'line-through' : 'none' }}>{r.name}</p>
+                      <p style={{ fontSize: 11, color: isPaid ? 'var(--green)' : 'var(--text3)', textDecoration: isPaid ? 'line-through' : 'none' }}>
+                        {isPaid ? (type === 'income' ? 'Received' : 'Paid') : `Due ${format(new Date(r.next_due_date + 'T00:00:00'), 'MMM d')}`}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <Amount value={Number(r.amount)} size="sm" />
+                      {isPaid && <p style={{ fontSize: 10, color: 'var(--green)', marginTop: 1 }}>✓ done</p>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {allActual.length === 0 && items.length === 0 && (
+          <EmptyState icon={<TrendingUp size={20} />} title={`No ${type === 'income' ? 'income' : 'expenses'} yet`} description={`Add transactions or recurring items to see them here`} />
+        )}
+
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>Manage recurring items in the Recurring page</p>
       </div>
     </Modal>
   )
@@ -277,11 +247,7 @@ function RecurringSummaryModal({ type, open, onClose, recurringItems, transactio
 // ─── Section Label ────────────────────────────────────────────────────────────
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{
-      fontSize: 11, fontWeight: 600, color: 'var(--text4)',
-      textTransform: 'uppercase', letterSpacing: '0.07em',
-      marginBottom: 8,
-    }}>{children}</p>
+    <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text4)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>{children}</p>
   )
 }
 
@@ -303,6 +269,9 @@ export function DashboardPage() {
   const income  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
 
+  // Build account map for lookup in transaction rows
+  const accountMap = Object.fromEntries(accounts.map(a => [a.id, a]))
+
   const dueItems = recurring.filter(r => {
     const days = differenceInDays(new Date(r.next_due_date), new Date())
     return days >= 0 && days <= 7
@@ -314,18 +283,12 @@ export function DashboardPage() {
     <div className="fade-in">
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.3px', marginBottom: 2 }}>
-          Hey, {name}
-        </h1>
+        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.3px', marginBottom: 2 }}>Hey, {name}</h1>
         <p style={{ color: 'var(--text3)', fontSize: 13 }}>{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
       </div>
 
       {/* Total Balance */}
-      <div style={{
-        background: 'linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)',
-        borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: 16,
-        border: '1px solid rgba(99,102,241,.3)',
-      }}>
+      <div style={{ background: 'linear-gradient(135deg, #312e81 0%, #1e1b4b 100%)', borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: 16, border: '1px solid rgba(99,102,241,.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Balance</span>
           <Wallet size={18} color="rgba(255,255,255,.5)" />
@@ -347,14 +310,13 @@ export function DashboardPage() {
               <button key={a.id} onClick={() => setSelectedAccount(a)} style={{
                 background: 'var(--bg2)', borderRadius: 14, padding: '14px',
                 border: `1px solid ${a.color_hex ?? 'var(--border)'}33`,
-                textAlign: 'left', cursor: 'pointer',
-                transition: 'border-color .15s, background .15s',
+                textAlign: 'left', cursor: 'pointer', transition: 'border-color .15s, background .15s',
               }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg2)' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: a.color_hex ?? 'var(--indigo)', flexShrink: 0 }} />
+                  <AccountLogoIcon accountName={a.name} colorHex={a.color_hex ?? undefined} size={28} borderRadius={8} />
                   <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</span>
                 </div>
                 <p style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-body)', color: 'var(--text)' }}>
@@ -379,11 +341,7 @@ export function DashboardPage() {
       <div style={{ marginBottom: 16 }}>
         <SectionLabel>This Month</SectionLabel>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <button onClick={() => setRecurringModal('income')} style={{
-            background: 'var(--bg2)', borderRadius: 14, padding: '14px',
-            border: '1px solid rgba(74,222,128,.15)', textAlign: 'left', cursor: 'pointer',
-            transition: 'background .15s',
-          }}
+          <button onClick={() => setRecurringModal('income')} style={{ background: 'var(--bg2)', borderRadius: 14, padding: '14px', border: '1px solid rgba(74,222,128,.15)', textAlign: 'left', cursor: 'pointer', transition: 'background .15s' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg2)' }}
           >
@@ -392,13 +350,9 @@ export function DashboardPage() {
               <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>Income</span>
             </div>
             <Amount value={income} size="md" />
-            <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>tap to view schedule</p>
+            <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>tap to view details</p>
           </button>
-          <button onClick={() => setRecurringModal('expense')} style={{
-            background: 'var(--bg2)', borderRadius: 14, padding: '14px',
-            border: '1px solid rgba(248,113,113,.15)', textAlign: 'left', cursor: 'pointer',
-            transition: 'background .15s',
-          }}
+          <button onClick={() => setRecurringModal('expense')} style={{ background: 'var(--bg2)', borderRadius: 14, padding: '14px', border: '1px solid rgba(248,113,113,.15)', textAlign: 'left', cursor: 'pointer', transition: 'background .15s' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg3)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg2)' }}
           >
@@ -407,7 +361,7 @@ export function DashboardPage() {
               <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}>Expenses</span>
             </div>
             <Amount value={expense} size="md" />
-            <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>tap to view schedule</p>
+            <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 2 }}>tap to view details</p>
           </button>
         </div>
       </div>
@@ -451,11 +405,7 @@ export function DashboardPage() {
       <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', padding: '16px', border: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 16 }}>Recent Transactions</h2>
-          <button onClick={() => setAddTxnOpen(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            background: 'var(--indigo)', border: 'none', color: '#fff',
-            borderRadius: 10, padding: '7px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>
+          <button onClick={() => setAddTxnOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--indigo)', border: 'none', color: '#fff', borderRadius: 10, padding: '7px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             <Plus size={14} /> Add
           </button>
         </div>
@@ -469,24 +419,27 @@ export function DashboardPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {transactions.map((t, i) => {
               const cat = CATEGORIES.find(c => c.key === t.category)
+              const acct = accountMap[t.account_id]
               return (
                 <div key={t.id}
                   onClick={() => setSelectedTxn(t)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '10px 0', cursor: 'pointer',
-                    borderBottom: i < transactions.length - 1 ? '1px solid var(--border)' : 'none',
-                  }}>
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                    background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
-                  }}>
-                    {cat?.icon ?? '💳'}
-                  </div>
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer', borderBottom: i < transactions.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  {/* Account logo instead of category emoji */}
+                  {acct ? (
+                    <AccountLogoIcon accountName={acct.name} colorHex={acct.color_hex ?? undefined} size={38} borderRadius={10} />
+                  ) : (
+                    <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>
+                      {cat?.icon ?? '💳'}
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text3)' }}>{format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}{t.note ? ` · ${t.note.replace(/__rid:[^_]+__\s?/, '')}` : ''}</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {acct?.name ?? (cat?.label ?? t.category)}
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--text3)' }}>
+                      {cat?.label ?? t.category} · {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
+                      {t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
+                    </p>
                   </div>
                   <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
                 </div>
@@ -500,11 +453,7 @@ export function DashboardPage() {
       <AddTransactionModal open={addTxnOpen} onClose={() => setAddTxnOpen(false)} />
       <AddAccountModal open={addAcctOpen} onClose={() => setAddAcctOpen(false)} />
       <TransactionDetailModal txn={selectedTxn} onClose={() => setSelectedTxn(null)} />
-      <AccountTransactionsModal
-        account={selectedAccount}
-        open={!!selectedAccount}
-        onClose={() => setSelectedAccount(null)}
-      />
+      <AccountTransactionsModal account={selectedAccount} open={!!selectedAccount} onClose={() => setSelectedAccount(null)} />
       <RecurringSummaryModal
         type={recurringModal ?? 'income'}
         open={!!recurringModal}

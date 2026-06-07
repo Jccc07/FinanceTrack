@@ -30,6 +30,18 @@ function useMonthlyData(months: Date[]) {
 function BarChart({ data }: { data: { month: string; income: number; expense: number }[] }) {
   const max = Math.max(...data.flatMap(d => [d.income, d.expense]), 1)
   const H = 120
+  const hasData = data.some(d => d.income > 0 || d.expense > 0)
+
+  if (!hasData) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text3)' }}>
+        <p style={{ fontSize: 28, marginBottom: 8 }}>📊</p>
+        <p style={{ fontSize: 13, fontFamily: 'var(--font-body)', fontWeight: 500 }}>No transaction data yet</p>
+        <p style={{ fontSize: 12, color: 'var(--text4)', marginTop: 4 }}>Add transactions to see your 6-month chart</p>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 8, justifyContent: 'flex-end' }}>
@@ -44,8 +56,8 @@ function BarChart({ data }: { data: { month: string; income: number; expense: nu
         {data.map(d => (
           <div key={d.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: H }}>
-              <div title={`Income ₱${d.income.toLocaleString()}`} style={{ width: '45%', height: `${(d.income / max) * 100}%`, background: 'var(--green)', borderRadius: '3px 3px 0 0', transition: 'height .4s ease', minHeight: 2 }} />
-              <div title={`Expense ₱${d.expense.toLocaleString()}`} style={{ width: '45%', height: `${(d.expense / max) * 100}%`, background: 'var(--red)', borderRadius: '3px 3px 0 0', transition: 'height .4s ease', minHeight: 2 }} />
+              <div title={`Income ₱${d.income.toLocaleString()}`} style={{ width: '45%', height: `${Math.max((d.income / max) * 100, d.income > 0 ? 3 : 0)}%`, background: 'var(--green)', borderRadius: '3px 3px 0 0', transition: 'height .4s ease', minHeight: d.income > 0 ? 4 : 0 }} />
+              <div title={`Expense ₱${d.expense.toLocaleString()}`} style={{ width: '45%', height: `${Math.max((d.expense / max) * 100, d.expense > 0 ? 3 : 0)}%`, background: 'var(--red)', borderRadius: '3px 3px 0 0', transition: 'height .4s ease', minHeight: d.expense > 0 ? 4 : 0 }} />
             </div>
             <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>{d.month}</span>
           </div>
