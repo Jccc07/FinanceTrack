@@ -170,9 +170,7 @@ export function useMarkEntryPaid() {
       if (txnErr) throw txnErr
       return txn
     },
-    onSuccess: (txn, vars) => {
-      // Instant optimistic update so the checkbox flips immediately
-      qc.setQueryData([...ENTRY_PAID_KEY, userId, vars.entry.id, vars.monthKey], txn.id)
+    onSuccess: (_txn, vars) => {
       qc.invalidateQueries({ queryKey: [...RECURRING_ENTRIES_KEY, userId, vars.monthKey] })
       qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
       qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
@@ -199,9 +197,7 @@ export function useUnmarkEntryPaid() {
       }
       return { entryId: entry.id, monthKey }
     },
-    onSuccess: ({ entryId, monthKey }) => {
-      // Instant optimistic update so the checkbox clears immediately
-      qc.setQueryData([...ENTRY_PAID_KEY, userId, entryId, monthKey], null)
+    onSuccess: ({ monthKey }) => {
       qc.invalidateQueries({ queryKey: [...RECURRING_ENTRIES_KEY, userId, monthKey] })
       qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
       qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
@@ -217,22 +213,7 @@ export async function getEntryPaidTxnForMonth(userId: string, entryId: string, m
   return data?.[0]?.id ?? null
 }
 
-export const ENTRY_PAID_KEY = ['entry_paid_status'] as const
 
-export function useEntryPaidStatus(entryId: string, monthKey: string) {
-  const userId = useAuthStore(s => s.user?.id)
-  return useQuery({
-    queryKey: [...ENTRY_PAID_KEY, userId, entryId, monthKey],
-    queryFn: () => getEntryPaidTxnForMonth(userId!, entryId, monthKey),
-    enabled: !!userId && !!entryId,
-    // Keep showing existing data while refetching — prevents the checkbox
-    // from flickering back to unchecked state during background refetches
-    placeholderData: (prev: any) => prev,
-    // Treat as fresh for 30s so a navigation back doesn't trigger an
-    // unnecessary refetch that could cause a visible loading flash
-    staleTime: 30_000,
-  })
-}
 
 // ─── Legacy hooks kept for compatibility ───────────────────────────────────
 

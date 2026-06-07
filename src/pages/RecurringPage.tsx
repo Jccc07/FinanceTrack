@@ -10,9 +10,10 @@ import {
 import {
   useMonthEntries, useAddMonthEntry, useRemoveMonthEntry,
   useExportEntriesToMonths, useMarkEntryPaid, useUnmarkEntryPaid,
-  useEntryPaidStatus, type MonthEntry,
+  getEntryPaidTxnForMonth, type MonthEntry,
 } from '@/hooks/useRecurringItems'
 import { useAccounts } from '@/hooks/useAccounts'
+import { useAuthStore } from '@/stores/authStore'
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/constants/categories'
 import { Input, Select, Modal, Spinner, Amount, Badge } from '@/components/ui'
 import { BrandLogo } from '@/components/ui/BrandLogo'
@@ -451,27 +452,40 @@ function EntryRow({
 }: {
   entry: MonthEntry; monthKey: string; isCurrentMo: boolean; isPast: boolean
 }) {
-  const removeEntry = useRemoveMonthEntry()
+  const userId = useAuthStore(s => s.user?.id)
+  const markPaid = useMarkEntryPaid()
   const unmark = useUnmarkEntryPaid()
+  const removeEntry = useRemoveMonthEntry()
 
   const [markOpen, setMarkOpen] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [isPaid, setIsPaid] = useState(false)
+  const [initialised, setInitialised] = useState(false)
 
-  const { data: paidTxnId, isLoading: isInitialLoading } = useEntryPaidStatus(entry.id, monthKey)
-  const isPaid = !!paidTxnId
+  // One-time mount check — read real paid state from DB
+  useEffect(() => {
+    if (!userId) return
+    getEntryPaidTxnForMonth(userId, entry.id, monthKey).then(txnId => {
+      setIsPaid(!!txnId)
+      setInitialised(true)
+    })
+  }, [userId, entry.id, monthKey])
 
-  const canCheck = isCurrentMo
-  // Only block interaction on first load — not on background refetches.
-  // This prevents the checkbox from becoming un-clickable after marking paid.
-  const checking = isInitialLoading
+  const canCheck = isCurrentMo && initialised
 
   const handleCheck = () => {
-    if (!canCheck || checking) return
+    if (!canCheck) return
     if (isPaid) {
-      unmark.mutate({ entry, monthKey })
+      setIsPaid(false)
+      unmark.mutate({ entry, monthKey }, { onError: () => setIsPaid(true) })
     } else {
       setMarkOpen(true)
     }
+  }
+
+  const handleMarkSuccess = () => {
+    setIsPaid(true)
+    setMarkOpen(false)
   }
 
   const handleRemove = async () => {
@@ -490,7 +504,7 @@ function EntryRow({
       }}>
         <button
           onClick={handleCheck}
-          disabled={!canCheck || checking}
+          disabled={!canCheck}
           title={isPast ? 'Past month — read only' : !isCurrentMo ? 'Future month — cannot check yet' : undefined}
           style={{
             width: 24, height: 24, borderRadius: 7, flexShrink: 0,
@@ -500,7 +514,7 @@ function EntryRow({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: !canCheck ? 0.35 : 1, transition: 'all .15s',
           }}>
-          {checking ? <Spinner size={11} /> : isPaid ? <Check size={12} color="#000" strokeWidth={3} /> : null}
+          {!initialised ? <Spinner size={11} /> : isPaid ? <Check size={12} color="#000" strokeWidth={3} /> : null}
         </button>
 
         <BrandLogo
@@ -562,7 +576,7 @@ function EntryRow({
       <MarkPaidModal
         open={markOpen}
         onClose={() => setMarkOpen(false)}
-        onSuccess={() => {}}
+        onSuccess={handleMarkSuccess}
         entry={entry}
         monthKey={monthKey}
       />
