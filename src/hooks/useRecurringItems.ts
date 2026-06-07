@@ -172,6 +172,7 @@ export function useMarkEntryPaid() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: [...RECURRING_ENTRIES_KEY, userId, vars.monthKey] })
+      qc.invalidateQueries({ queryKey: [...ENTRY_PAID_KEY, userId, vars.entry.id, vars.monthKey] })
       qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
       qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
     },
@@ -195,10 +196,11 @@ export function useUnmarkEntryPaid() {
         const { error: delErr } = await (supabase as any).from('transactions').delete().eq('id', txns[0].id)
         if (delErr) throw delErr
       }
-      return monthKey
+      return { entryId: entry.id, monthKey }
     },
-    onSuccess: (monthKey) => {
+    onSuccess: ({ entryId, monthKey }) => {
       qc.invalidateQueries({ queryKey: [...RECURRING_ENTRIES_KEY, userId, monthKey] })
+      qc.invalidateQueries({ queryKey: [...ENTRY_PAID_KEY, userId, entryId, monthKey] })
       qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
       qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
     },
@@ -211,6 +213,17 @@ export async function getEntryPaidTxnForMonth(userId: string, entryId: string, m
     .like('note', `__meid:${entryId}__%`)
     .gte('txn_date', `${month}-01`).lte('txn_date', `${month}-31`).limit(1)
   return data?.[0]?.id ?? null
+}
+
+export const ENTRY_PAID_KEY = ['entry_paid_status'] as const
+
+export function useEntryPaidStatus(entryId: string, monthKey: string) {
+  const userId = useAuthStore(s => s.user?.id)
+  return useQuery({
+    queryKey: [...ENTRY_PAID_KEY, userId, entryId, monthKey],
+    queryFn: () => getEntryPaidTxnForMonth(userId!, entryId, monthKey),
+    enabled: !!userId && !!entryId,
+  })
 }
 
 // ─── Legacy hooks kept for compatibility ───────────────────────────────────
