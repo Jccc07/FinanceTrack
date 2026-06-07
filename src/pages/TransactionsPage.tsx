@@ -16,9 +16,14 @@ export function TransactionsPage() {
   const [filterType, setFilterType] = useState<'income' | 'expense' | ''>('')
   const [addOpen, setAddOpen]   = useState(false)
   const [selectedTxn, setSelectedTxn] = useState<any>(null)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
 
   const { data: transactions = [], isLoading } = useTransactions({ month })
   const { data: accounts = [] } = useAccounts()
+
+  // Reset to page 1 whenever filters or month change
+  React.useEffect(() => { setPage(1) }, [month, search, filterAccount, filterType])
 
   const accountMap = Object.fromEntries(accounts.map(a => [a.id, a]))
 
@@ -39,6 +44,17 @@ export function TransactionsPage() {
     grouped[d].push(t)
   }
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+
+  // Flatten filtered into ordered list for pagination, then re-group current page
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageSlice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const pageGrouped: Record<string, typeof filtered> = {}
+  for (const t of pageSlice) {
+    if (!pageGrouped[t.txn_date]) pageGrouped[t.txn_date] = []
+    pageGrouped[t.txn_date].push(t)
+  }
+  const pageDates = Object.keys(pageGrouped).sort((a, b) => b.localeCompare(a))
 
   return (
     <div className="fade-in">
@@ -133,13 +149,13 @@ export function TransactionsPage() {
         ? <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
         : filtered.length === 0
           ? <EmptyState icon={<Search size={22} />} title="No transactions" description="Try adjusting your filters" action={<Button onClick={() => setAddOpen(true)}><Plus size={14} /> Add transaction</Button>} />
-          : sortedDates.map(date => (
+          : pageDates.map(date => (
             <div key={date} style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-body)' }}>
                 {format(new Date(date + 'T00:00:00'), 'EEE, MMM d')}
               </p>
               <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border2)' }}>
-                {grouped[date].map((t, i) => {
+                {pageGrouped[date].map((t, i) => {
                   const cat = CATEGORIES.find(c => c.key === t.category)
                   const acct = accountMap[t.account_id]
                   return (
@@ -147,7 +163,7 @@ export function TransactionsPage() {
                       onClick={() => setSelectedTxn(t)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                        borderBottom: i < grouped[date].length - 1 ? '1px solid var(--border)' : 'none',
+                        borderBottom: i < pageGrouped[date].length - 1 ? '1px solid var(--border)' : 'none',
                         cursor: 'pointer', transition: 'background .1s',
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.03)'}
@@ -187,6 +203,52 @@ export function TransactionsPage() {
             </div>
           ))
       }
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 20, marginBottom: 8 }}>
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border)',
+              background: 'var(--bg2)', cursor: safePage === 1 ? 'not-allowed' : 'pointer',
+              color: safePage === 1 ? 'var(--text4)' : 'var(--text2)', transition: 'opacity .15s',
+              opacity: safePage === 1 ? 0.4 : 1,
+            }}>
+            <ChevronLeft size={16} />
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button key={p} onClick={() => setPage(p)} style={{
+                width: 32, height: 32, borderRadius: 8, border: 'none',
+                background: p === safePage ? 'var(--indigo)' : 'var(--bg2)',
+                color: p === safePage ? '#fff' : 'var(--text3)',
+                fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-body)',
+                cursor: 'pointer', transition: 'all .15s',
+              }}>{p}</button>
+            ))}
+          </div>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 10, border: '1px solid var(--border)',
+              background: 'var(--bg2)', cursor: safePage === totalPages ? 'not-allowed' : 'pointer',
+              color: safePage === totalPages ? 'var(--text4)' : 'var(--text2)', transition: 'opacity .15s',
+              opacity: safePage === totalPages ? 0.4 : 1,
+            }}>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+      {filtered.length > 0 && (
+        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginBottom: 16 }}>
+          Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} transactions
+        </p>
+      )}
 
       <AddTransactionModal open={addOpen} onClose={() => setAddOpen(false)} />
       <TransactionDetailModal txn={selectedTxn} onClose={() => setSelectedTxn(null)} />
