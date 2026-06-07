@@ -31,6 +31,7 @@ export function useTransactions(filters: TransactionFilters = {}) {
         .gte('txn_date', format(startOfMonth(month), 'yyyy-MM-dd'))
         .lte('txn_date', format(endOfMonth(month), 'yyyy-MM-dd'))
         .order('txn_date', { ascending: false })
+        .order('created_at', { ascending: false })
 
       if (filters.category)  query = query.eq('category', filters.category)
       if (filters.accountId) query = query.eq('account_id', filters.accountId)

@@ -268,13 +268,15 @@ export function DashboardPage() {
   const { user } = useAuthStore()
   const totalBalance = useTotalBalance()
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts()
-  const { data: transactions = [], isLoading: txnsLoading, isError: txnsError } = useTransactions({ month: new Date(), limit: 10 })
-  const recentTxns = transactions.slice(0, 10)
+  // Full month — used for income/expense totals and the modal's transaction list
+  const { data: allTransactions = [], isLoading: txnsLoading, isError: txnsError } = useTransactions({ month: new Date() })
+  // Recent 10 only — used for the dashboard recent transactions section
+  const recentTxns = allTransactions.slice(0, 10)
   const nextPayday = useNextPayday()
   const { data: recurring = [] } = useAllRecurringItems()
 
-  const income  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+  const income  = allTransactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
+  const expense = allTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
 
   // Build account map for lookup in transaction rows
   const accountMap = Object.fromEntries(accounts.map(a => [a.id, a]))
@@ -420,7 +422,7 @@ export function DashboardPage() {
           <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>
         ) : txnsError ? (
           <EmptyState icon={<TrendingUp size={22} />} title="Could not load transactions" description="Check your connection and try refreshing" />
-        ) : transactions.length === 0 ? (
+        ) : allTransactions.length === 0 ? (
           <EmptyState icon={<TrendingUp size={22} />} title="No transactions yet" description="Add your first transaction" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -456,7 +458,7 @@ export function DashboardPage() {
         )}
         {transactions.length > 0 && (
           <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 12 }}>
-            Showing {recentTxns.length} most recent · Visit Transactions page for full history
+            Showing {recentTxns.length} of {allTransactions.length} this month · Visit Transactions page for full history
           </p>
         )}
       </div>
@@ -471,7 +473,7 @@ export function DashboardPage() {
         open={!!recurringModal}
         onClose={() => setRecurringModal(null)}
         recurringItems={recurring}
-        transactions={transactions}
+        transactions={allTransactions}
       />
     </div>
   )
