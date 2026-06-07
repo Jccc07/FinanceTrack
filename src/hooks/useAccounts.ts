@@ -35,12 +35,32 @@ export function useCreateAccount() {
   const userId = useAuthStore(s => s.user?.id)
   return useMutation({
     mutationFn: async (account: Omit<AccountInsert, 'user_id'>) => {
+      // 1. Create the account
       const { data, error } = await (supabase as any)
         .from('accounts').insert({ ...account, user_id: userId! }).select().single()
       if (error) throw error
+
+      // 2. Log an adjustment transaction for the opening balance (same pattern as edit/delete)
+      //    type 'transfer' keeps it excluded from income/expense totals
+      if (Number(account.balance) !== 0) {
+        const today = new Date().toISOString().slice(0, 10)
+        await (supabase as any).from('transactions').insert({
+          user_id: userId!,
+          account_id: data.id,
+          type: 'transfer',
+          amount: Math.abs(Number(account.balance)),
+          category: 'account_adjustment',
+          note: `__adj:add__ Add Account: ${account.name}`,
+          txn_date: today,
+        })
+      }
+
       return data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ACCOUNTS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
+      qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
+    },
   })
 }
 
@@ -62,7 +82,6 @@ export function useDeleteAccount() {
   const userId = useAuthStore(s => s.user?.id)
   return useMutation({
     mutationFn: async ({ id, name, balance }: { id: string; name: string; balance: number }) => {
-      // Log an adjustment transaction so it appears in history (transfer type — excluded from income/expense)
       if (balance !== 0) {
         const today = new Date().toISOString().slice(0, 10)
         await (supabase as any).from('transactions').insert({
@@ -88,14 +107,12 @@ export function useEditAccountBalance() {
     mutationFn: async ({ id, name, oldBalance, newBalance }: { id: string; name: string; oldBalance: number; newBalance: number }) => {
       const diff = newBalance - oldBalance
       if (diff === 0) return
-      // Log adjustment transaction (transfer — excluded from income/expense computations)
       const today = new Date().toISOString().slice(0, 10)
       await (supabase as any).from('transactions').insert({
         user_id: userId!, account_id: id, type: 'transfer',
         amount: Math.abs(diff), category: 'account_adjustment',
         note: `__adj:edit__ Edit Account: ${name}`, txn_date: today,
       })
-      // Update the account balance directly
       const { error } = await (supabase as any).from('accounts').update({ balance: newBalance }).eq('id', id)
       if (error) throw error
     },

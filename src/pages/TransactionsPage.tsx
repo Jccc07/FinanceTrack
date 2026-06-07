@@ -368,7 +368,7 @@ export function TransactionsPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.1px' }}>
                           {t.category === 'account_adjustment' && t.note
-                            ? t.note.replace(/__adj:(edit|delete)__\s?/, '')
+                            ? t.note.replace(/__adj:(add|edit|delete)__\s?/, '')
                             : acct?.name ?? (cat?.label ?? t.category)}
                         </p>
                         <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

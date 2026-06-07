@@ -205,7 +205,7 @@ function AccountTransactionsModal({ account, open, onClose }: { account: any; op
                 {txns.slice(0, 5).map((t, i) => {
                   const isAdj = t.category === 'account_adjustment'
                   const adjLabel = isAdj && t.note
-                    ? t.note.replace(/__adj:(edit|delete)__\s?/, '')
+                    ? t.note.replace(/__adj:(add|edit|delete)__\s?/, '')
                     : null
                   const cat = CATEGORIES.find(c => c.key === t.category)
                   const slice = txns.slice(0, 5)
@@ -554,14 +554,21 @@ export function DashboardPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {recentTxns.map((t, i) => {
+              const isAdj = t.category === 'account_adjustment'
               const cat = CATEGORIES.find(c => c.key === t.category)
               const acct = accountMap[t.account_id]
+              const adjLabel = isAdj && t.note
+                ? t.note.replace(/__adj:(add|edit|delete)__\s?/, '')
+                : null
               return (
                 <div key={t.id}
                   onClick={() => setSelectedTxn(t)}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer', borderBottom: i < recentTxns.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  {/* Account logo instead of category emoji */}
-                  {acct ? (
+                  {isAdj ? (
+                    <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>
+                      ⚙️
+                    </div>
+                  ) : acct ? (
                     <AccountLogoIcon accountName={acct.name} colorHex={acct.color_hex ?? undefined} size={38} borderRadius={10} />
                   ) : (
                     <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: t.type === 'income' ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>
@@ -570,14 +577,16 @@ export function DashboardPage() {
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {acct?.name ?? (cat?.label ?? t.category)}
+                      {isAdj ? (adjLabel ?? 'Account adjustment') : (acct?.name ?? (cat?.label ?? t.category))}
                     </p>
                     <p style={{ fontSize: 11, color: 'var(--text3)' }}>
-                      {cat?.label ?? t.category} · {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
-                      {t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
+                      {isAdj ? 'Account adjustment' : `${cat?.label ?? t.category} · ${format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}${t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}`}
                     </p>
                   </div>
-                  <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                  {isAdj
+                    ? <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500 }}>₱{Number(t.amount).toLocaleString()}</span>
+                    : <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                  }
                 </div>
               )
             })}
