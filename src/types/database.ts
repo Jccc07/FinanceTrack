@@ -66,6 +66,23 @@ export type Database = {
         };
         Update: Partial<Database['public']['Tables']['recurring_items']['Insert']>;
       };
+      recurring_month_entries: {
+        Row: {
+          id: string; user_id: string; month_key: string; name: string;
+          amount: number; category: string; frequency: string;
+          item_type: 'bill' | 'subscription' | 'installment' | 'income';
+          installment_total: number | null; installment_paid: number;
+          source_item_id: string | null; created_at: string;
+        };
+        Insert: {
+          id?: string; user_id: string; month_key: string; name: string;
+          amount: number; category?: string; frequency?: string;
+          item_type?: 'bill' | 'subscription' | 'installment' | 'income';
+          installment_total?: number | null; installment_paid?: number;
+          source_item_id?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['recurring_month_entries']['Insert']>;
+      };
       savings_goals: {
         Row: {
           id: string; user_id: string; account_id: string | null; name: string;
