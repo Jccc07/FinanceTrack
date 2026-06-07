@@ -28,7 +28,7 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
     if (!name || !balance) { setError('Name and balance are required'); return }
     setLoading(true); setError('')
     try {
-      await createAccount.mutateAsync({ name, balance: parseFloat(balance), type: type as any, color_hex: color, sort_order: 0 })
+      await createAccount.mutateAsync({ name, balance: parseFloat(balance), type: type as any, color_hex: color, icon: '', sort_order: 0 })
       setName(''); setBalance(''); setType('bank_savings'); onClose()
     } catch (e: any) { setError(e.message) }
     finally { setLoading(false) }
