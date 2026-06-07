@@ -14,6 +14,7 @@ export function TransactionsPage() {
   const [search, setSearch]     = useState('')
   const [filterAccount, setFilterAccount] = useState('')
   const [filterType, setFilterType] = useState<'income' | 'expense' | ''>('')
+  const [filterDate, setFilterDate] = useState('')
   const [addOpen, setAddOpen]   = useState(false)
   const [selectedTxn, setSelectedTxn] = useState<any>(null)
   const [page, setPage] = useState(1)
@@ -23,7 +24,8 @@ export function TransactionsPage() {
   const { data: accounts = [] } = useAccounts()
 
   // Reset to page 1 whenever filters or month change
-  React.useEffect(() => { setPage(1) }, [month, search, filterAccount, filterType])
+  React.useEffect(() => { setPage(1); setFilterDate('') }, [month, search, filterAccount, filterType])
+  React.useEffect(() => { setPage(1) }, [filterDate])
 
   const accountMap = Object.fromEntries(accounts.map(a => [a.id, a]))
 
@@ -31,7 +33,8 @@ export function TransactionsPage() {
     const matchSearch = !search || t.category.toLowerCase().includes(search.toLowerCase()) || (t.note ?? '').toLowerCase().includes(search.toLowerCase()) || (accountMap[t.account_id]?.name ?? '').toLowerCase().includes(search.toLowerCase())
     const matchAccount = !filterAccount || t.account_id === filterAccount
     const matchType    = !filterType || t.type === filterType
-    return matchSearch && matchAccount && matchType
+    const matchDate    = !filterDate || t.txn_date === filterDate
+    return matchSearch && matchAccount && matchType && matchDate
   })
 
   const income  = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
@@ -45,10 +48,10 @@ export function TransactionsPage() {
   }
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
-  // Flatten filtered into ordered list for pagination, then re-group current page
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  // When a specific date is selected, show all on that day (no paging needed)
+  const totalPages = filterDate ? 1 : Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
-  const pageSlice = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const pageSlice = filterDate ? filtered : filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
   const pageGrouped: Record<string, typeof filtered> = {}
   for (const t of pageSlice) {
     if (!pageGrouped[t.txn_date]) pageGrouped[t.txn_date] = []
@@ -142,6 +145,35 @@ export function TransactionsPage() {
             {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </Select>
         </div>
+        {/* Date filter — chip row showing only dates that have transactions */}
+        {sortedDates.length > 1 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, color: 'var(--text4)', fontWeight: 500, flexShrink: 0 }}>Day:</span>
+            <button
+              onClick={() => setFilterDate('')}
+              style={{
+                padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)',
+                background: !filterDate ? 'var(--indigo)' : 'var(--bg3)',
+                color: !filterDate ? '#fff' : 'var(--text3)',
+                transition: 'all .15s',
+              }}>All</button>
+            {sortedDates.map(d => {
+              const label = format(new Date(d + 'T00:00:00'), 'MMM d')
+              const isActive = filterDate === d
+              return (
+                <button key={d} onClick={() => setFilterDate(isActive ? '' : d)}
+                  style={{
+                    padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)',
+                    background: isActive ? 'var(--indigo)' : 'var(--bg3)',
+                    color: isActive ? '#fff' : 'var(--text3)',
+                    transition: 'all .15s',
+                  }}>{label}</button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* List */}
@@ -204,8 +236,8 @@ export function TransactionsPage() {
           ))
       }
 
-      {/* Pagination */}
-      {totalPages > 1 && (
+      {/* Pagination — hidden when a specific date is selected */}
+      {totalPages > 1 && !filterDate && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 20, marginBottom: 8 }}>
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
