@@ -456,7 +456,7 @@ export function DashboardPage() {
             })}
           </div>
         )}
-        {transactions.length > 0 && (
+        {allTransactions.length > 0 && (
           <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 12 }}>
             Showing {recentTxns.length} of {allTransactions.length} this month · Visit Transactions page for full history
           </p>
