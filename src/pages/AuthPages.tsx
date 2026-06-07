@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, User, Wallet, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { Input, Spinner } from '@/components/ui'
+import { FinTrackLogo } from '@/components/ui/FinTrackLogo'
 
 function AuthShell({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle: string }) {
   return (
@@ -13,11 +14,8 @@ function AuthShell({ children, title, subtitle }: { children: React.ReactNode; t
       <div className="fade-in" style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 16, background: 'var(--indigo)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
-          }}>
-            <Wallet size={24} color="#fff" />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <FinTrackLogo markSize={52} wordSize={26} gap={12} />
           </div>
           <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', marginBottom: 6 }}>{title}</h1>
           <p style={{ color: 'var(--text3)', fontSize: 14 }}>{subtitle}</p>
