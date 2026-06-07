@@ -89,7 +89,7 @@ function AddEntryModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Add Entry">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Input
           label="Name" placeholder="Netflix, Rent, Salary…"
           value={f.name} onChange={e => setF(p => ({ ...p, name: e.target.value }))} required
@@ -117,14 +117,9 @@ function AddEntryModal({
         {error && <p style={{ fontSize: 13, color: 'var(--red)' }}>{error}</p>}
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button
-            type="button" fullWidth loading={loading}
-            onClick={e => submit(e as any)}
-          >
-            Add entry
-          </Button>
+          <Button type="submit" fullWidth loading={loading}>Add entry</Button>
         </div>
-      </div>
+      </form>
     </Modal>
   )
 }
@@ -158,21 +153,16 @@ function MarkPaidModal({
       <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
         Which account did you use to pay?
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Select label="Account" value={accountId} onChange={e => setAccountId(e.target.value)} required>
           <option value="">Select account…</option>
           {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </Select>
         <div style={{ display: 'flex', gap: 10 }}>
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button
-            type="button" fullWidth loading={loading}
-            onClick={e => submit(e as any)}
-          >
-            Confirm
-          </Button>
+          <Button type="submit" fullWidth loading={loading}>Confirm</Button>
         </div>
-      </div>
+      </form>
     </Modal>
   )
 }
@@ -453,7 +443,7 @@ export function RecurringPage() {
     <div className="fade-in">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800 }}>Recurring</h1>
+        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>Recurring</h1>
         {(isCurrent || isFuture) && (
           <button
             onClick={() => setAddOpen(true)}
@@ -486,7 +476,7 @@ export function RecurringPage() {
         </button>
 
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 15, letterSpacing: '-0.2px' }}>
             {format(viewMonth, 'MMMM yyyy')}
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', marginTop: 3 }}>
