@@ -161,11 +161,12 @@ export function useMarkEntryPaid() {
     mutationFn: async ({ entry, accountId, monthKey }: { entry: MonthEntry; accountId: string; monthKey: string }) => {
       const today = format(new Date(), 'yyyy-MM-dd')
       const txnType = entry.item_type === 'income' ? 'income' : 'expense'
+      // Note encodes both entry ID and monthKey so each month's paid status is distinct
       const { data: txn, error: txnErr } = await (supabase as any)
         .from('transactions').insert({
           user_id: userId!, account_id: accountId, type: txnType,
           amount: Number(entry.amount), category: entry.category,
-          note: `__meid:${entry.id}__ ${entry.name}`, txn_date: today,
+          note: `__meid:${entry.id}__${monthKey}__ ${entry.name}`, txn_date: today,
         }).select().single()
       if (txnErr) throw txnErr
       return txn
@@ -183,12 +184,12 @@ export function useUnmarkEntryPaid() {
   const userId = useAuthStore(s => s.user?.id)
   return useMutation({
     mutationFn: async ({ entry, monthKey }: { entry: MonthEntry; monthKey: string }) => {
+      // Find by note pattern only — no date filter since txn_date is today at insert time
+      // and may not fall within monthKey range if paid near month boundary.
       const { data: txns, error: findErr } = await (supabase as any)
         .from('transactions').select('id')
         .eq('user_id', userId!)
-        .like('note', `__meid:${entry.id}__%`)
-        .gte('txn_date', `${monthKey}-01`)
-        .lte('txn_date', `${monthKey}-31`)
+        .like('note', `__meid:${entry.id}__${monthKey}__%`)
         .order('created_at', { ascending: false }).limit(1)
       if (findErr) throw findErr
       if (txns && txns.length > 0) {
@@ -205,11 +206,12 @@ export function useUnmarkEntryPaid() {
   })
 }
 
-export async function getEntryPaidTxnForMonth(userId: string, entryId: string, month: string): Promise<string | null> {
+export async function getEntryPaidTxnForMonth(userId: string, entryId: string, monthKey: string): Promise<string | null> {
+  // Match by entry ID + monthKey encoded in note — unique per entry per month
   const { data } = await (supabase as any)
     .from('transactions').select('id').eq('user_id', userId)
-    .like('note', `__meid:${entryId}__%`)
-    .gte('txn_date', `${month}-01`).lte('txn_date', `${month}-31`).limit(1)
+    .like('note', `__meid:${entryId}__${monthKey}__%`)
+    .limit(1)
   return data?.[0]?.id ?? null
 }
 
