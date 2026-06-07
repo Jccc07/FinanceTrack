@@ -10,12 +10,12 @@ import {
 import {
   useMonthEntries, useAddMonthEntry, useRemoveMonthEntry,
   useExportEntriesToMonths, useMarkEntryPaid, useUnmarkEntryPaid,
-  getEntryPaidTxnForMonth, type MonthEntry,
+  useEntryPaidStatus, type MonthEntry,
 } from '@/hooks/useRecurringItems'
 import { useAccounts } from '@/hooks/useAccounts'
-import { useAuthStore } from '@/stores/authStore'
-import { CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/constants/categories'
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/constants/categories'
 import { Input, Select, Modal, Spinner, Amount, Badge } from '@/components/ui'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -451,31 +451,21 @@ function EntryRow({
 }: {
   entry: MonthEntry; monthKey: string; isCurrentMo: boolean; isPast: boolean
 }) {
-  const userId = useAuthStore(s => s.user?.id)
   const removeEntry = useRemoveMonthEntry()
   const unmark = useUnmarkEntryPaid()
 
   const [markOpen, setMarkOpen] = useState(false)
-  const [isPaid, setIsPaid] = useState(false)
-  const [checking, setChecking] = useState(true)
   const [removing, setRemoving] = useState(false)
 
-  useEffect(() => {
-    if (!userId) return
-    setChecking(true)
-    getEntryPaidTxnForMonth(userId, entry.id, monthKey).then(txnId => {
-      setIsPaid(!!txnId); setChecking(false)
-    })
-  }, [entry.id, monthKey, userId])
+  const { data: paidTxnId, isLoading: checking } = useEntryPaidStatus(entry.id, monthKey)
+  const isPaid = !!paidTxnId
 
-  const cat = CATEGORIES.find(c => c.key === entry.category)
   const canCheck = isCurrentMo
 
   const handleCheck = () => {
     if (!canCheck || checking) return
     if (isPaid) {
       unmark.mutate({ entry, monthKey })
-      setIsPaid(false)
     } else {
       setMarkOpen(true)
     }
@@ -510,13 +500,11 @@ function EntryRow({
           {checking ? <Spinner size={11} /> : isPaid ? <Check size={12} color="#000" strokeWidth={3} /> : null}
         </button>
 
-        <div style={{
-          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-          background: isPaid ? 'rgba(74,222,128,.1)' : 'var(--bg3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
-        }}>
-          {cat?.icon ?? '🔄'}
-        </div>
+        <BrandLogo
+          name={entry.name}
+          size={34}
+          borderRadius={10}
+        />
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
@@ -571,7 +559,7 @@ function EntryRow({
       <MarkPaidModal
         open={markOpen}
         onClose={() => setMarkOpen(false)}
-        onSuccess={() => setIsPaid(true)}
+        onSuccess={() => {}}
         entry={entry}
         monthKey={monthKey}
       />
