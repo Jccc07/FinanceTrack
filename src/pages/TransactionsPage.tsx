@@ -8,7 +8,7 @@ import { Plus, ChevronLeft, ChevronRight, Search, CalendarDays, X } from 'lucide
 import { useTransactions } from '@/hooks/useTransactions'
 import { useAccounts } from '@/hooks/useAccounts'
 import { CATEGORIES } from '@/constants/categories'
-import { Card, Button, Amount, EmptyState, Spinner, Select, Input } from '@/components/ui'
+import { Card, Amount, EmptyState, Spinner, Select, Input } from '@/components/ui'
 import { AccountLogoIcon } from '@/components/ui/AccountLogoIcon'
 import { AddTransactionModal } from '@/components/modals/AddTransactionModal'
 import { TransactionDetailModal } from '@/components/modals/TransactionDetailModal'
@@ -331,7 +331,7 @@ export function TransactionsPage() {
               icon={<Search size={22} />}
               title="No transactions"
               description="Try adjusting your filters"
-              action={<Button onClick={() => setAddOpen(true)}><Plus size={14} /> Add transaction</Button>}
+              action={<button onClick={() => setAddOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--indigo)', border: 'none', color: '#fff', borderRadius: 12, padding: '9px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', letterSpacing: '-0.1px' }} onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }} onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}><Plus size={15} /> Add transaction</button>}
             />
           : pageDates.map(date => (
             <div key={date} style={{ marginBottom: 14 }}>
