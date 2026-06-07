@@ -40,7 +40,14 @@ export function useCreateAccount() {
         .from('accounts').insert({ ...account, user_id: userId! }).select().single()
       if (error) throw error
 
-      // 2. Log an adjustment transaction for the opening balance (same pattern as edit/delete)
+      // 2. Explicitly set the balance via update (insert may be ignored by column-level RLS)
+      if (Number(account.balance) !== 0) {
+        const { error: balErr } = await (supabase as any)
+          .from('accounts').update({ balance: Number(account.balance) }).eq('id', data.id)
+        if (balErr) throw balErr
+      }
+
+      // 3. Log an adjustment transaction for the opening balance (same pattern as edit/delete)
       //    type 'transfer' keeps it excluded from income/expense totals
       if (Number(account.balance) !== 0) {
         const today = new Date().toISOString().slice(0, 10)
