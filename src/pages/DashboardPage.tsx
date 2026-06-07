@@ -19,7 +19,7 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
   const createAccount = useCreateAccount()
   const [name, setName] = useState('')
   const [balance, setBalance] = useState('')
-  const [type, setType] = useState('bank')
+  const [type, setType] = useState('bank_savings')
   const [color, setColor] = useState(ACCOUNT_COLORS[0])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -29,7 +29,7 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
     setLoading(true); setError('')
     try {
       await createAccount.mutateAsync({ name, balance: parseFloat(balance), type: type as any, color_hex: color, sort_order: 0 })
-      setName(''); setBalance(''); setType('bank'); onClose()
+      setName(''); setBalance(''); setType('bank_savings'); onClose()
     } catch (e: any) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -40,9 +40,11 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
         <Input label="Account name" placeholder="GCash, BPI, Cash..." value={name} onChange={e => setName(e.target.value)} />
         <Input label="Current balance (₱)" type="number" placeholder="0.00" value={balance} onChange={e => setBalance(e.target.value)} />
         <Select label="Type" value={type} onChange={e => setType(e.target.value)}>
-          {['bank','ewallet','cash','credit','savings','other'].map(t => (
-            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-          ))}
+          <option value="bank_savings">Bank / Savings</option>
+          <option value="ewallet">E-Wallet</option>
+          <option value="cash">Cash</option>
+          <option value="emergency">Emergency Fund</option>
+          <option value="investment">Investment</option>
         </Select>
         <div>
           <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text2)', display: 'block', marginBottom: 8 }}>Color</label>
