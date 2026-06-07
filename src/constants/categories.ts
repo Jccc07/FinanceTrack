@@ -24,6 +24,8 @@ export const CATEGORIES: Category[] = [
   { key: 'freelance',   label: 'Freelance',icon: '💻', color: '#6366F1', bgColor: '#1e1b4b', incomeOnly: true },
   { key: 'bonus',       label: 'Bonus',    icon: '⭐', color: '#F59E0B', bgColor: '#422006', incomeOnly: true },
   { key: 'transfer_in', label: 'Transfer', icon: '⬇️', color: '#3B82F6', bgColor: '#1e3a5f', incomeOnly: true },
+  // Special internal category — used for account edits/deletes, never shown in income/expense filters
+  { key: 'account_adjustment', label: 'Account Adjustment', icon: '⚙️', color: '#94A3B8', bgColor: '#1E293B' },
 ];
 
 export const getCategoryByKey = (key: string): Category =>

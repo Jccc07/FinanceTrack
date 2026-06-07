@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { format, differenceInDays } from 'date-fns'
-import { TrendingUp, TrendingDown, Wallet, Plus, Calendar } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, Plus, Calendar, Edit2, Trash2, Check, X } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { useAccounts, useTotalBalance, useCreateAccount } from '@/hooks/useAccounts'
+import { useAccounts, useTotalBalance, useCreateAccount, useUpdateAccount, useDeleteAccount, useEditAccountBalance } from '@/hooks/useAccounts'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useNextPayday } from '@/hooks/useIncomeSchedules'
 import { useAllRecurringItems } from '@/hooks/useRecurringItems'
@@ -76,45 +76,170 @@ function AddAccountModal({ open, onClose }: { open: boolean; onClose: () => void
 // ─── Account Transactions Modal ───────────────────────────────────────────────
 function AccountTransactionsModal({ account, open, onClose }: { account: any; open: boolean; onClose: () => void }) {
   const { data: txns = [], isLoading } = useTransactions({ month: new Date(), accountId: account?.id })
+  const editBalance = useEditAccountBalance()
+  const deleteAccount = useDeleteAccount()
+
+  const [mode, setMode] = useState<'view' | 'edit' | 'confirmDelete'>('view')
+  const [newBalance, setNewBalance] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+  const [actionError, setActionError] = useState('')
+
+  // Reset state when modal opens
+  React.useEffect(() => {
+    if (open) { setMode('view'); setNewBalance(''); setActionError('') }
+  }, [open])
+
   if (!account) return null
+
+  const handleEditSubmit = async () => {
+    const val = parseFloat(newBalance)
+    if (isNaN(val)) { setActionError('Please enter a valid amount'); return }
+    setActionLoading(true); setActionError('')
+    try {
+      await editBalance.mutateAsync({ id: account.id, name: account.name, oldBalance: Number(account.balance), newBalance: val })
+      setMode('view')
+    } catch (e: any) { setActionError(e.message) }
+    finally { setActionLoading(false) }
+  }
+
+  const handleDelete = async () => {
+    setActionLoading(true); setActionError('')
+    try {
+      await deleteAccount.mutateAsync({ id: account.id, name: account.name, balance: Number(account.balance) })
+      onClose()
+    } catch (e: any) { setActionError(e.message) }
+    finally { setActionLoading(false) }
+  }
+
+  const btnBase: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    padding: '8px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+    fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-body)', transition: 'opacity .15s',
+  }
+
   return (
     <Modal open={open} onClose={onClose} title={`${account.name} — ${format(new Date(), 'MMMM yyyy')}`} width={440}>
       <div>
-        <div style={{ background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: account.color_hex ?? 'var(--indigo)' }} />
-            <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Current balance</span>
+        {/* Balance row + action buttons */}
+        <div style={{ background: 'var(--bg3)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: mode === 'edit' ? 12 : 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: account.color_hex ?? 'var(--indigo)' }} />
+              <span style={{ fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Current balance</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Amount value={Number(account.balance)} size="md" />
+              {mode === 'view' && (
+                <>
+                  <button onClick={() => { setNewBalance(String(account.balance)); setMode('edit') }}
+                    title="Edit balance"
+                    style={{ ...btnBase, background: 'var(--bg2)', color: 'var(--text2)', padding: '6px 10px' }}>
+                    <Edit2 size={13} />
+                  </button>
+                  <button onClick={() => setMode('confirmDelete')}
+                    title="Delete account"
+                    style={{ ...btnBase, background: 'rgba(248,113,113,.12)', color: 'var(--red)', padding: '6px 10px' }}>
+                    <Trash2 size={13} />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          <Amount value={Number(account.balance)} size="md" />
+
+          {/* Edit balance form */}
+          {mode === 'edit' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Input
+                label="New balance (₱)"
+                type="number"
+                placeholder="0.00"
+                value={newBalance}
+                onChange={e => setNewBalance(e.target.value)}
+              />
+              {actionError && <p style={{ fontSize: 12, color: 'var(--red)' }}>{actionError}</p>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => { setMode('view'); setActionError('') }}
+                  style={{ ...btnBase, flex: 1, background: 'var(--bg2)', color: 'var(--text2)' }}>
+                  <X size={13} /> Cancel
+                </button>
+                <button onClick={handleEditSubmit} disabled={actionLoading}
+                  style={{ ...btnBase, flex: 1, background: 'var(--indigo)', color: '#fff', opacity: actionLoading ? 0.7 : 1 }}>
+                  <Check size={13} /> {actionLoading ? 'Saving…' : 'Save balance'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Delete confirmation */}
+          {mode === 'confirmDelete' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>
+                Are you sure you want to delete <strong>{account.name}</strong>?
+                This will archive the account and log a ₱{Number(account.balance).toLocaleString()} adjustment entry.
+                This cannot be undone.
+              </p>
+              {actionError && <p style={{ fontSize: 12, color: 'var(--red)' }}>{actionError}</p>}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => { setMode('view'); setActionError('') }}
+                  style={{ ...btnBase, flex: 1, background: 'var(--bg2)', color: 'var(--text2)' }}>
+                  <X size={13} /> Cancel
+                </button>
+                <button onClick={handleDelete} disabled={actionLoading}
+                  style={{ ...btnBase, flex: 1, background: 'var(--red)', color: '#fff', opacity: actionLoading ? 0.7 : 1 }}>
+                  <Trash2 size={13} /> {actionLoading ? 'Deleting…' : 'Yes, delete'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-        {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><Spinner /></div>
-        ) : txns.length === 0 ? (
-          <EmptyState icon={<TrendingUp size={20} />} title="No transactions this month" description="Transactions for this account will appear here" />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {txns.slice(0, 5).map((t, i) => {
-              const cat = CATEGORIES.find(c => c.key === t.category)
-              const slice = txns.slice(0, 5)
-              return (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < slice.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <AccountLogoIcon accountName={account.name} colorHex={account.color_hex} size={36} borderRadius={10} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat?.label ?? t.category}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text3)' }}>
-                      {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
-                      {t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
-                    </p>
-                  </div>
-                  <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
-                </div>
-              )
-            })}
-          </div>
+
+        {/* Recent transactions */}
+        {mode === 'view' && (
+          <>
+            {isLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><Spinner /></div>
+            ) : txns.length === 0 ? (
+              <EmptyState icon={<TrendingUp size={20} />} title="No transactions this month" description="Transactions for this account will appear here" />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {txns.slice(0, 5).map((t, i) => {
+                  const isAdj = t.category === 'account_adjustment'
+                  const adjLabel = isAdj && t.note
+                    ? t.note.replace(/__adj:(edit|delete)__\s?/, '')
+                    : null
+                  const cat = CATEGORIES.find(c => c.key === t.category)
+                  const slice = txns.slice(0, 5)
+                  return (
+                    <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < slice.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: isAdj ? 'var(--bg3)' : undefined,
+                        display: isAdj ? 'flex' : undefined, alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                      }}>
+                        {isAdj ? '⚙️' : <AccountLogoIcon accountName={account.name} colorHex={account.color_hex} size={36} borderRadius={10} />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {adjLabel ?? cat?.label ?? t.category}
+                        </p>
+                        <p style={{ fontSize: 11, color: 'var(--text3)' }}>
+                          {format(new Date(t.txn_date + 'T00:00:00'), 'MMM d')}
+                        </p>
+                      </div>
+                      {isAdj
+                        ? <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500 }}>₱{Number(t.amount).toLocaleString()}</span>
+                        : <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                      }
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
+              {txns.length > 5 ? `Showing 5 of ${txns.length} transactions · ` : ''}For full history, visit the Transactions page
+            </p>
+          </>
         )}
-        <p style={{ fontSize: 11, color: 'var(--text4)', textAlign: 'center', marginTop: 16 }}>
-          {txns.length > 5 ? `Showing 5 of ${txns.length} transactions · ` : ''}For full history, visit the Transactions page
-        </p>
       </div>
     </Modal>
   )

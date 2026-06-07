@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { TRANSACTIONS_KEY } from '@/hooks/useTransactions'
 import type { Database } from '@/types/database'
 
 type Account = Database['public']['Tables']['accounts']['Row']
@@ -58,11 +59,49 @@ export function useUpdateAccount() {
 
 export function useDeleteAccount() {
   const qc = useQueryClient()
+  const userId = useAuthStore(s => s.user?.id)
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, name, balance }: { id: string; name: string; balance: number }) => {
+      // Log an adjustment transaction so it appears in history (transfer type — excluded from income/expense)
+      if (balance !== 0) {
+        const today = new Date().toISOString().slice(0, 10)
+        await (supabase as any).from('transactions').insert({
+          user_id: userId!, account_id: id, type: 'transfer',
+          amount: Math.abs(balance), category: 'account_adjustment',
+          note: `__adj:delete__ Delete Account: ${name}`, txn_date: today,
+        })
+      }
       const { error } = await (supabase as any).from('accounts').update({ is_archived: true }).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ACCOUNTS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
+      qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
+    },
+  })
+}
+
+export function useEditAccountBalance() {
+  const qc = useQueryClient()
+  const userId = useAuthStore(s => s.user?.id)
+  return useMutation({
+    mutationFn: async ({ id, name, oldBalance, newBalance }: { id: string; name: string; oldBalance: number; newBalance: number }) => {
+      const diff = newBalance - oldBalance
+      if (diff === 0) return
+      // Log adjustment transaction (transfer — excluded from income/expense computations)
+      const today = new Date().toISOString().slice(0, 10)
+      await (supabase as any).from('transactions').insert({
+        user_id: userId!, account_id: id, type: 'transfer',
+        amount: Math.abs(diff), category: 'account_adjustment',
+        note: `__adj:edit__ Edit Account: ${name}`, txn_date: today,
+      })
+      // Update the account balance directly
+      const { error } = await (supabase as any).from('accounts').update({ balance: newBalance }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
+      qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
+    },
   })
 }

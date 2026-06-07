@@ -166,13 +166,20 @@ export function TransactionsPage() {
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.1px' }}>
-                          {acct?.name ?? (cat?.label ?? t.category)}
+                          {t.category === 'account_adjustment' && t.note
+                            ? t.note.replace(/__adj:(edit|delete)__\s?/, '')
+                            : acct?.name ?? (cat?.label ?? t.category)}
                         </p>
                         <p style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {cat?.label ?? t.category}{t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}
+                          {t.category === 'account_adjustment'
+                            ? 'Account adjustment'
+                            : `${cat?.label ?? t.category}${t.note ? ` · ${t.note.replace(/__(?:rid|meid):[^_]+__\s?/, '')}` : ''}`}
                         </p>
                       </div>
-                      <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                      {t.category === 'account_adjustment'
+                        ? <span style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500, flexShrink: 0 }}>₱{Number(t.amount).toLocaleString()}</span>
+                        : <Amount value={t.type === 'expense' ? -Number(t.amount) : Number(t.amount)} size="sm" showSign />
+                      }
                     </div>
                   )
                 })}
