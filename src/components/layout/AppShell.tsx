@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, BarChart2,
-  RefreshCcw, LogOut, X, Wallet, ChevronRight,
+  RefreshCcw, LogOut, X, ChevronRight,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
+import { FinTrackLogo } from '@/components/ui/FinTrackLogo'
 
 const NAV = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard' },
@@ -19,7 +20,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Close drawer on route change
   useEffect(() => { setDrawerOpen(false) }, [location.pathname])
 
   const handleSignOut = async () => { await signOut(); navigate('/login') }
@@ -37,11 +37,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         display: 'flex', flexDirection: 'column', height: '100vh',
         position: 'sticky', top: 0,
       }}>
-        <div style={{ padding: '24px 20px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--indigo)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Wallet size={18} color="#fff" />
-          </div>
-          <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px' }}>FinTrack</span>
+        <div style={{ padding: '22px 20px 16px' }}>
+          <FinTrackLogo markSize={34} wordSize={17} gap={10} />
         </div>
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV.map(({ to, icon: Icon, label }) => (
@@ -91,18 +88,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         transition: 'transform .25s ease',
         borderRight: '1px solid var(--border2)',
       }}>
-        {/* Drawer header — padded below status bar */}
+        {/* Drawer header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 16px 12px',
           paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--indigo)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wallet size={16} color="#fff" />
-            </div>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>FinTrack</span>
-          </div>
+          <FinTrackLogo markSize={32} wordSize={16} gap={9} />
           <button onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, display: 'flex' }}>
             <X size={20} />
           </button>
@@ -151,14 +143,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* ── Main content ── */}
       <main style={{ flex: 1, overflow: 'hidden', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Mobile top bar — outside scroll so it never moves */}
+        {/* Mobile top bar */}
         <div className="mobile-only mobile-top-bar" style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '12px 16px', paddingTop: 'calc(env(safe-area-inset-top) + 12px)',
           borderBottom: '1px solid var(--border)',
           background: 'var(--bg)', flexShrink: 0, zIndex: 10,
         }}>
-          <span style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.3px' }}>FinTrack</span>
+          <FinTrackLogo markSize={30} wordSize={17} gap={9} />
           <button
             onClick={() => setDrawerOpen(v => !v)}
             style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 10, cursor: 'pointer', color: 'var(--text2)', padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
