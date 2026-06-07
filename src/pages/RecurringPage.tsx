@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   format, addMonths, subMonths, isSameMonth,
-  startOfMonth, getYear, getMonth,
+  startOfMonth, getYear,
 } from 'date-fns'
 import {
-  Plus, ChevronLeft, ChevronRight, Check, Info,
+  Plus, ChevronLeft, ChevronRight, Check,
   Trash2, Send, Lock, Calendar,
 } from 'lucide-react'
 import {
@@ -14,13 +14,13 @@ import {
 } from '@/hooks/useRecurringItems'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useAuthStore } from '@/stores/authStore'
-import { CATEGORIES } from '@/constants/categories'
-import { Button, Input, Select, Modal, Spinner, Amount, Badge } from '@/components/ui'
+import { CATEGORIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/constants/categories'
+import { Input, Select, Modal, Spinner, Amount, Badge } from '@/components/ui'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const FREQ_OPTS = ['daily', 'weekly', 'monthly', 'yearly']
-const TYPE_OPTS = ['bill', 'subscription', 'installment', 'income'] as const
+const EXPENSE_TYPES = ['bill', 'subscription', 'installment'] as const
 const TYPE_COLORS: Record<string, string> = {
   bill: 'red', subscription: 'indigo', installment: 'yellow', income: 'green',
 }
@@ -30,9 +30,16 @@ const NOW = new Date()
 function isPastMonth(date: Date) { return date < startOfMonth(NOW) }
 function isCurrentMonth(date: Date) { return isSameMonth(date, NOW) }
 
-// Build all months for the current year
 function getYearMonths(year: number) {
   return Array.from({ length: 12 }, (_, i) => new Date(year, i, 1))
+}
+
+// Shared button style — matches AddTransactionModal exactly
+const btnBase: React.CSSProperties = {
+  flex: 1, padding: '12px 0', borderRadius: 12, border: 'none',
+  cursor: 'pointer', fontSize: 14, fontWeight: 600,
+  fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
+  transition: 'opacity .15s, background .15s',
 }
 
 // ─── Add Entry Modal ─────────────────────────────────────────────────────────
@@ -43,19 +50,31 @@ function AddEntryModal({
   open: boolean; onClose: () => void; monthKey: string; prefill?: Partial<MonthEntry>
 }) {
   const addEntry = useAddMonthEntry()
+
+  // Step 1: cash flow direction (expense = bill/sub/installment, income)
+  const [cashFlow, setCashFlow] = useState<'expense' | 'income'>('expense')
   const [f, setF] = useState({
-    name: prefill?.name ?? '',
-    amount: prefill?.amount?.toString() ?? '',
-    category: prefill?.category ?? '',
-    frequency: prefill?.frequency ?? 'monthly',
-    item_type: (prefill?.item_type ?? 'bill') as MonthEntry['item_type'],
-    installment_total: prefill?.installment_total?.toString() ?? '',
+    name: '',
+    amount: '',
+    category: '',
+    frequency: 'monthly',
+    item_type: 'bill' as MonthEntry['item_type'],
+    installment_total: '',
+    due_date: '',
+    auto_check: false,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!open) {
+      setCashFlow('expense')
+      setF({ name: '', amount: '', category: '', frequency: 'monthly', item_type: 'bill', installment_total: '', due_date: '', auto_check: false })
+      setError(''); setLoading(false)
+    }
     if (open && prefill) {
+      const isIncome = prefill.item_type === 'income'
+      setCashFlow(isIncome ? 'income' : 'expense')
       setF({
         name: prefill.name ?? '',
         amount: prefill.amount?.toString() ?? '',
@@ -63,10 +82,19 @@ function AddEntryModal({
         frequency: prefill.frequency ?? 'monthly',
         item_type: prefill.item_type ?? 'bill',
         installment_total: prefill.installment_total?.toString() ?? '',
+        due_date: '',
+        auto_check: false,
       })
     }
-    if (!open) { setError(''); setLoading(false) }
   }, [open])
+
+  // When cash flow changes, reset type
+  const handleCashFlowChange = (cf: 'expense' | 'income') => {
+    setCashFlow(cf)
+    setF(p => ({ ...p, item_type: cf === 'income' ? 'income' : 'bill', category: '' }))
+  }
+
+  const filteredCats = cashFlow === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setLoading(true)
@@ -77,7 +105,7 @@ function AddEntryModal({
         amount: parseFloat(f.amount),
         category: f.category || f.item_type,
         frequency: f.frequency,
-        item_type: f.item_type,
+        item_type: cashFlow === 'income' ? 'income' : f.item_type,
         installment_total: f.item_type === 'installment' ? parseInt(f.installment_total || '0') : null,
         installment_paid: 0,
         source_item_id: prefill?.source_item_id ?? null,
@@ -89,35 +117,134 @@ function AddEntryModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Add Entry">
+      {/* Cash flow toggle — mirrors AddTransactionModal */}
+      <div style={{
+        display: 'flex', background: 'var(--bg)', borderRadius: 12,
+        padding: 4, marginBottom: 20, border: '1px solid var(--border2)',
+      }}>
+        {(['expense', 'income'] as const).map(cf => (
+          <button
+            key={cf}
+            type="button"
+            onClick={() => handleCashFlowChange(cf)}
+            style={{
+              flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)', transition: 'all .15s',
+              background: cashFlow === cf ? (cf === 'expense' ? 'var(--red)' : 'var(--green)') : 'transparent',
+              color: cashFlow === cf ? '#fff' : 'var(--text3)',
+            }}
+          >
+            {cf === 'expense' ? 'Expense' : 'Income'}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Input
-          label="Name" placeholder="Netflix, Rent, Salary…"
+          label="Name" placeholder={cashFlow === 'income' ? 'Salary, Freelance…' : 'Netflix, Rent…'}
           value={f.name} onChange={e => setF(p => ({ ...p, name: e.target.value }))} required
         />
         <Input
-          label="Amount (₱)" type="number" placeholder="0.00" step="0.01"
+          label="Amount (₱)" type="number" placeholder="0.00" step="0.01" min="0.01"
           value={f.amount} onChange={e => setF(p => ({ ...p, amount: e.target.value }))} required
         />
-        <Select label="Type" value={f.item_type} onChange={e => setF(p => ({ ...p, item_type: e.target.value as MonthEntry['item_type'] }))}>
-          {TYPE_OPTS.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-        </Select>
+
+        {/* Type — only shown for expenses */}
+        {cashFlow === 'expense' && (
+          <Select
+            label="Type"
+            value={f.item_type}
+            onChange={e => setF(p => ({ ...p, item_type: e.target.value as MonthEntry['item_type'] }))}
+          >
+            {EXPENSE_TYPES.map(t => (
+              <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+            ))}
+          </Select>
+        )}
+
         <Select label="Frequency" value={f.frequency} onChange={e => setF(p => ({ ...p, frequency: e.target.value }))}>
           {FREQ_OPTS.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
         </Select>
+
         <Select label="Category" value={f.category} onChange={e => setF(p => ({ ...p, category: e.target.value }))}>
           <option value="">Auto</option>
-          {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
+          {filteredCats.map(c => <option key={c.key} value={c.key}>{c.icon} {c.label}</option>)}
         </Select>
-        {f.item_type === 'installment' && (
+
+        {cashFlow === 'expense' && f.item_type === 'installment' && (
           <Input
             label="Total installments" type="number" placeholder="12"
             value={f.installment_total} onChange={e => setF(p => ({ ...p, installment_total: e.target.value }))}
           />
         )}
-        {error && <p style={{ fontSize: 13, color: 'var(--red)' }}>{error}</p>}
+
+        {/* Optional due date */}
+        <Input
+          label="Due date (optional)"
+          type="date"
+          value={f.due_date}
+          onChange={e => {
+            setF(p => ({ ...p, due_date: e.target.value, auto_check: e.target.value ? p.auto_check : false }))
+          }}
+        />
+
+        {/* Auto-check toggle — only when a date is set */}
+        {f.due_date && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'var(--bg)', borderRadius: 12, padding: '12px 14px',
+            border: '1px solid var(--border2)',
+          }}>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', fontFamily: 'var(--font-body)' }}>
+                Auto-check on due date
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
+                App will mark this as paid on {format(new Date(f.due_date + 'T00:00:00'), 'MMM d')} automatically
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setF(p => ({ ...p, auto_check: !p.auto_check }))}
+              style={{
+                width: 44, height: 24, borderRadius: 99, border: 'none',
+                cursor: 'pointer', transition: 'background .2s', flexShrink: 0,
+                background: f.auto_check ? 'var(--indigo)' : 'var(--bg3)',
+                position: 'relative',
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 2,
+                left: f.auto_check ? 22 : 2,
+                width: 20, height: 20, borderRadius: '50%',
+                background: '#fff', transition: 'left .2s',
+                boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+              }} />
+            </button>
+          </div>
+        )}
+
+        {error && <p style={{ fontSize: 13, color: 'var(--red)', fontFamily: 'var(--font-body)' }}>{error}</p>}
+
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button type="submit" fullWidth loading={loading}>Add entry</Button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ ...btnBase, background: 'var(--bg3)', color: 'var(--text2)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ ...btnBase, background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1 }}
+            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            {loading ? 'Adding…' : 'Add entry'}
+          </button>
         </div>
       </form>
     </Modal>
@@ -136,6 +263,8 @@ function MarkPaidModal({
   const [accountId, setAccountId] = useState('')
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => { if (!open) { setAccountId(''); setLoading(false) } }, [open])
+
   if (!entry) return null
 
   const submit = async (e: React.FormEvent) => {
@@ -149,18 +278,39 @@ function MarkPaidModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={`Mark "${entry.name}" as paid`} width={340}>
-      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
+    <Modal open={open} onClose={onClose} title={`Mark as paid`} width={340}>
+      <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', fontFamily: 'var(--font-body)', marginBottom: 4 }}>
+        {entry.name}
+      </p>
+      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>
         Which account did you use to pay?
       </p>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Select label="Account" value={accountId} onChange={e => setAccountId(e.target.value)} required>
           <option value="">Select account…</option>
-          {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          {accounts.map(a => (
+            <option key={a.id} value={a.id}>{a.name}</option>
+          ))}
         </Select>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button type="submit" fullWidth loading={loading}>Confirm</Button>
+        <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ ...btnBase, background: 'var(--bg3)', color: 'var(--text2)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ ...btnBase, background: 'var(--indigo)', color: '#fff', opacity: loading ? 0.7 : 1 }}
+            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+          >
+            {loading ? 'Confirming…' : 'Confirm'}
+          </button>
         </div>
       </form>
     </Modal>
@@ -178,15 +328,11 @@ function ExportModal({
   const currentYear = getYear(NOW)
   const allMonths = getYearMonths(currentYear)
 
-  // Exclude past months and the source month itself
-  const sourceDate = new Date(sourceMonthKey + '-01')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
-  useEffect(() => {
-    if (!open) { setSelected(new Set()); setDone(false) }
-  }, [open])
+  useEffect(() => { if (!open) { setSelected(new Set()); setDone(false) } }, [open])
 
   const toggleMonth = (mk: string) => {
     setSelected(prev => {
@@ -208,7 +354,7 @@ function ExportModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Export entries to…" width={360}>
-      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
+      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14, fontFamily: 'var(--font-body)' }}>
         Choose which months to copy these {entries.length} entries to.
         Months that already have entries will be skipped.
       </p>
@@ -224,6 +370,7 @@ function ExportModal({
           return (
             <button
               key={mk}
+              type="button"
               disabled={disabled}
               onClick={() => !disabled && toggleMonth(mk)}
               style={{
@@ -234,6 +381,7 @@ function ExportModal({
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.4 : 1,
                 transition: 'all .15s',
+                fontFamily: 'var(--font-body)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -251,9 +399,7 @@ function ExportModal({
                     Source
                   </span>
                 )}
-                {isPast && !isSource && (
-                  <Lock size={11} color="var(--text4)" />
-                )}
+                {isPast && !isSource && <Lock size={11} color="var(--text4)" />}
               </div>
               {isSelected && <Check size={15} color="var(--indigo)" />}
             </button>
@@ -261,13 +407,25 @@ function ExportModal({
         })}
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
-        <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-        <Button
-          fullWidth loading={loading} disabled={selected.size === 0 || done}
-          onClick={handleExport}
+        <button
+          type="button"
+          onClick={onClose}
+          style={{ ...btnBase, background: 'var(--bg3)', color: 'var(--text2)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.8' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
         >
-          {done ? <><Check size={14} /> Done!</> : `Export to ${selected.size} month${selected.size !== 1 ? 's' : ''}`}
-        </Button>
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={selected.size === 0 || loading || done}
+          onClick={handleExport}
+          style={{ ...btnBase, background: 'var(--indigo)', color: '#fff', opacity: (selected.size === 0 || loading || done) ? 0.6 : 1 }}
+          onMouseEnter={e => { if (!loading && selected.size > 0) (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+          onMouseLeave={e => { if (!loading && selected.size > 0) (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+        >
+          {done ? '✓ Done!' : loading ? 'Exporting…' : `Export to ${selected.size} month${selected.size !== 1 ? 's' : ''}`}
+        </button>
       </div>
     </Modal>
   )
@@ -323,7 +481,6 @@ function EntryRow({
         border: `1px solid ${isPaid ? 'rgba(74,222,128,.2)' : 'var(--border)'}`,
         opacity: removing ? 0.4 : 1, transition: 'opacity .15s',
       }}>
-        {/* Checkbox — only current month */}
         <button
           onClick={handleCheck}
           disabled={!canCheck || checking}
@@ -339,7 +496,6 @@ function EntryRow({
           {checking ? <Spinner size={11} /> : isPaid ? <Check size={12} color="#000" strokeWidth={3} /> : null}
         </button>
 
-        {/* Icon */}
         <div style={{
           width: 34, height: 34, borderRadius: 10, flexShrink: 0,
           background: isPaid ? 'rgba(74,222,128,.1)' : 'var(--bg3)',
@@ -348,13 +504,13 @@ function EntryRow({
           {cat?.icon ?? '🔄'}
         </div>
 
-        {/* Name + badge */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
-            fontSize: 14, fontWeight: 600,
+            fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-body)',
             color: isPaid ? 'var(--text3)' : 'var(--text)',
             textDecoration: isPaid ? 'line-through' : 'none',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            letterSpacing: '-0.1px',
           }}>{entry.name}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
             <Badge color={TYPE_COLORS[entry.item_type] ?? 'gray'}>{entry.item_type}</Badge>
@@ -366,13 +522,11 @@ function EntryRow({
           </div>
         </div>
 
-        {/* Amount */}
         <div style={{ textAlign: 'right', marginRight: 6 }}>
           <Amount value={Number(entry.amount)} size="sm" />
           <p style={{ fontSize: 10, color: 'var(--text4)', marginTop: 1 }}>{entry.frequency}</p>
         </div>
 
-        {/* Remove — only on current & future months */}
         {!isPast && (
           <button
             onClick={handleRemove}
@@ -425,7 +579,6 @@ export function RecurringPage() {
   const isCurrent = isCurrentMonth(viewMonth)
   const isFuture = !isPast && !isCurrent
 
-  // Year boundaries
   const currentYear = getYear(NOW)
   const minMonth = new Date(currentYear, 0, 1)
   const maxMonth = new Date(currentYear, 11, 1)
@@ -443,15 +596,20 @@ export function RecurringPage() {
     <div className="fade-in">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>Recurring</h1>
+        <h1 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px' }}>
+          Recurring
+        </h1>
         {(isCurrent || isFuture) && (
           <button
             onClick={() => setAddOpen(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'var(--indigo)', border: 'none', color: '#fff',
-              borderRadius: 12, padding: '9px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              borderRadius: 12, padding: '9px 16px', fontSize: 14, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'var(--font-body)', letterSpacing: '-0.1px',
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
           >
             <Plus size={15} /> Add entry
           </button>
@@ -519,10 +677,10 @@ export function RecurringPage() {
         }}>
           <Lock size={14} color="var(--yellow)" style={{ flexShrink: 0, marginTop: 1 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 13, color: 'var(--yellow)', fontWeight: 600, marginBottom: 3 }}>
+            <p style={{ fontSize: 13, color: 'var(--yellow)', fontWeight: 600, fontFamily: 'var(--font-body)', marginBottom: 3 }}>
               Past month — read only
             </p>
-            <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10 }}>
+            <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: entries.length > 0 ? 10 : 0 }}>
               You can't edit past entries, but you can export them to future months.
             </p>
             {entries.length > 0 && (
@@ -532,7 +690,7 @@ export function RecurringPage() {
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   background: 'rgba(251,191,36,.12)', border: '1px solid rgba(251,191,36,.25)',
                   color: 'var(--yellow)', borderRadius: 8, padding: '6px 12px',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)',
                 }}>
                 <Send size={12} /> Export entries to another month
               </button>
@@ -550,7 +708,7 @@ export function RecurringPage() {
         }}>
           <Calendar size={14} color="var(--indigo)" style={{ flexShrink: 0, marginTop: 1 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 13, color: 'var(--indigo)', fontWeight: 600, marginBottom: 3 }}>
+            <p style={{ fontSize: 13, color: 'var(--indigo)', fontWeight: 600, fontFamily: 'var(--font-body)', marginBottom: 3 }}>
               Planning ahead
             </p>
             <p style={{ fontSize: 12, color: 'var(--text3)' }}>
@@ -562,21 +720,15 @@ export function RecurringPage() {
 
       {/* Summary strip */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-        <div style={{
-          background: 'var(--bg2)', borderRadius: 12, padding: '12px',
-          border: '1px solid rgba(248,113,113,.15)', textAlign: 'center',
-        }}>
+        <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: '12px', border: '1px solid rgba(248,113,113,.15)', textAlign: 'center' }}>
           <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>Bills / Expenses</p>
-          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--red)' }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--red)', fontFamily: 'var(--font-body)' }}>
             ₱{totalExpenses.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div style={{
-          background: 'var(--bg2)', borderRadius: 12, padding: '12px',
-          border: '1px solid rgba(74,222,128,.15)', textAlign: 'center',
-        }}>
+        <div style={{ background: 'var(--bg2)', borderRadius: 12, padding: '12px', border: '1px solid rgba(74,222,128,.15)', textAlign: 'center' }}>
           <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>Income</p>
-          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)' }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--font-body)' }}>
             ₱{totalIncome.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
           </p>
         </div>
@@ -584,13 +736,14 @@ export function RecurringPage() {
 
       {/* Filter tabs */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', paddingBottom: 2 }}>
-        {(['all', ...TYPE_OPTS] as string[]).map(t => (
+        {(['all', 'bill', 'subscription', 'installment', 'income'] as string[]).map(t => (
           <button
             key={t}
             onClick={() => setFilter(t)}
             style={{
               padding: '6px 14px', borderRadius: 99, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: 500, transition: 'all .15s', flexShrink: 0,
+              fontFamily: 'var(--font-body)',
               background: filter === t ? 'var(--indigo)' : 'var(--bg2)',
               color: filter === t ? '#fff' : 'var(--text3)',
             }}>
@@ -606,14 +759,15 @@ export function RecurringPage() {
           ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text3)' }}>
               <p style={{ fontSize: 32, marginBottom: 10 }}>🔁</p>
-              <p style={{ fontWeight: 600, marginBottom: 6 }}>No entries for {format(viewMonth, 'MMMM')}</p>
+              <p style={{ fontWeight: 600, fontFamily: 'var(--font-body)', marginBottom: 6 }}>
+                No entries for {format(viewMonth, 'MMMM')}
+              </p>
               <p style={{ fontSize: 13 }}>
                 {isPast
                   ? 'Nothing was recorded for this month.'
                   : isFuture
                   ? 'Plan ahead by adding entries or exporting from another month.'
-                  : 'Track your bills, subscriptions, and income.'
-                }
+                  : 'Track your bills, subscriptions, and income.'}
               </p>
               {(isCurrent || isFuture) && (
                 <button
@@ -621,7 +775,7 @@ export function RecurringPage() {
                   style={{
                     marginTop: 16, background: 'var(--indigo)', border: 'none',
                     color: '#fff', borderRadius: 12, padding: '10px 20px',
-                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)',
                   }}>
                   + Add entry
                 </button>
@@ -632,19 +786,12 @@ export function RecurringPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {bills.length > 0 && (
                 <div>
-                  <p style={{
-                    fontSize: 11, fontWeight: 700, color: 'var(--text3)',
-                    textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
-                  }}>Bills & Expenses</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontFamily: 'var(--font-body)' }}>
+                    Bills & Expenses
+                  </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {bills.map(entry => (
-                      <EntryRow
-                        key={entry.id}
-                        entry={entry}
-                        monthKey={monthKey}
-                        isCurrentMo={isCurrent}
-                        isPast={isPast}
-                      />
+                      <EntryRow key={entry.id} entry={entry} monthKey={monthKey} isCurrentMo={isCurrent} isPast={isPast} />
                     ))}
                   </div>
                 </div>
@@ -652,34 +799,26 @@ export function RecurringPage() {
 
               {incomes.length > 0 && (
                 <div>
-                  <p style={{
-                    fontSize: 11, fontWeight: 700, color: 'var(--text3)',
-                    textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8,
-                  }}>Income</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, fontFamily: 'var(--font-body)' }}>
+                    Income
+                  </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {incomes.map(entry => (
-                      <EntryRow
-                        key={entry.id}
-                        entry={entry}
-                        monthKey={monthKey}
-                        isCurrentMo={isCurrent}
-                        isPast={isPast}
-                      />
+                      <EntryRow key={entry.id} entry={entry} monthKey={monthKey} isCurrentMo={isCurrent} isPast={isPast} />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Export button at bottom for past/future too */}
-              {!isPast && entries.length > 0 && (
+              {entries.length > 0 && (
                 <button
                   onClick={() => setExportOpen(true)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     background: 'var(--bg2)', border: '1px solid var(--border)',
                     color: 'var(--text3)', borderRadius: 12, padding: '10px',
-                    fontSize: 13, fontWeight: 500, cursor: 'pointer', marginTop: 4,
-                    transition: 'all .15s',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'var(--font-body)', transition: 'all .15s', marginTop: 4,
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.borderColor = 'var(--indigo)'
