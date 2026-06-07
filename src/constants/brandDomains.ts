@@ -1,5 +1,5 @@
-// Maps brand/service name patterns to their logo domains for Logo.dev lookups.
-// Usage: https://img.logo.dev/{domain}?token=pk_public&size=64&format=png
+// Maps brand/service name patterns to their logo domains for Clearbit Logo API.
+// Usage: https://logo.clearbit.com/{domain}  (free, no API key needed)
 
 export interface BrandDomain {
   match: RegExp
@@ -12,7 +12,7 @@ export const BRAND_DOMAINS: BrandDomain[] = [
   { match: /\bbdo\b|bdo\s?unibank/i,                          domain: 'bdo.com.ph' },
   { match: /bank\s?of\s?the\s?philippine\s?islands|\bbpi\b/i, domain: 'bpi.com.ph' },
   { match: /metrobank|metropolitan\s?bank/i,                  domain: 'metrobank.com.ph' },
-  { match: /landbank|land\s?bank|lbp/i,                       domain: 'landbank.com' },
+  { match: /landbank|land\s?bank|\blbp\b/i,                   domain: 'landbank.com' },
   { match: /philippine\s?national\s?bank|\bpnb\b/i,           domain: 'pnb.com.ph' },
   { match: /security\s?bank/i,                                domain: 'securitybank.com' },
   { match: /unionbank|union\s?bank/i,                         domain: 'unionbankph.com' },
@@ -21,7 +21,7 @@ export const BRAND_DOMAINS: BrandDomain[] = [
   { match: /\brcbc\b/i,                                       domain: 'rcbc.com' },
   { match: /development\s?bank.*phil|\bdbp\b/i,               domain: 'dbp.ph' },
   { match: /maybank/i,                                        domain: 'maybank.com.ph' },
-  { match: /hsbc/i,                                           domain: 'hsbc.com.ph' },
+  { match: /\bhsbc\b/i,                                       domain: 'hsbc.com.ph' },
   { match: /\bcimb\b/i,                                       domain: 'cimbbank.com.ph' },
   { match: /tonik/i,                                          domain: 'tonikbank.com' },
   { match: /gotyme|go\s?tyme/i,                               domain: 'gotyme.com.ph' },
@@ -32,7 +32,6 @@ export const BRAND_DOMAINS: BrandDomain[] = [
 
   // ── E-Wallets & Digital Payment ───────────────────────────────────────────
   { match: /gcash/i,                                          domain: 'gcash.com' },
-  // Maya matched after Maya Bank to avoid conflict; both resolve the same domain
   { match: /\bmaya\b|paymaya/i,                               domain: 'maya.ph' },
   { match: /shopee\s?pay|spay/i,                              domain: 'shopee.ph' },
   { match: /grabpay|grab\s?pay/i,                             domain: 'grab.com' },
@@ -43,7 +42,7 @@ export const BRAND_DOMAINS: BrandDomain[] = [
   { match: /netflix/i,                                        domain: 'netflix.com' },
   { match: /disney\s?\+?(\s?plus)?/i,                         domain: 'disneyplus.com' },
   { match: /prime\s?video|amazon\s?prime/i,                   domain: 'primevideo.com' },
-  { match: /\bmax\b(\s?hbo)?|hbo\s?max|hbo\s?go/i,           domain: 'max.com' },
+  { match: /\bhbo\b|\bmax\b/i,                                domain: 'max.com' },
   { match: /\bviu\b/i,                                        domain: 'viu.com' },
   { match: /iqiyi|iqi\s?yi/i,                                 domain: 'iq.com' },
   { match: /wetv|we\s?tv/i,                                   domain: 'wetv.vip' },
@@ -51,11 +50,11 @@ export const BRAND_DOMAINS: BrandDomain[] = [
 
   // ── Music Streaming ───────────────────────────────────────────────────────
   { match: /spotify/i,                                        domain: 'spotify.com' },
-  { match: /apple\s?music/i,                                  domain: 'music.apple.com' },
-  { match: /youtube\s?music/i,                                domain: 'music.youtube.com' },
+  { match: /apple\s?music/i,                                  domain: 'apple.com' },
+  { match: /youtube\s?music/i,                                domain: 'youtube.com' },
 
   // ── Productivity & Cloud ──────────────────────────────────────────────────
-  { match: /google\s?one/i,                                   domain: 'one.google.com' },
+  { match: /google\s?one/i,                                   domain: 'google.com' },
   { match: /microsoft\s?365|office\s?365|ms\s?365/i,         domain: 'microsoft.com' },
   { match: /dropbox/i,                                        domain: 'dropbox.com' },
   { match: /canva/i,                                          domain: 'canva.com' },
@@ -63,35 +62,34 @@ export const BRAND_DOMAINS: BrandDomain[] = [
   { match: /claude|anthropic/i,                               domain: 'anthropic.com' },
 
   // ── Gaming ────────────────────────────────────────────────────────────────
-  { match: /xbox(\s?game\s?pass)?|game\s?pass/i,              domain: 'xbox.com' },
-  { match: /playstation\s?(plus|now|network)|\bps\s?plus\b|psn/i, domain: 'playstation.com' },
-  { match: /nintendo(\s?switch\s?online)?/i,                  domain: 'nintendo.com' },
+  { match: /xbox|game\s?pass/i,                               domain: 'xbox.com' },
+  { match: /playstation|ps\s?plus|\bpsn\b/i,                  domain: 'playstation.com' },
+  { match: /nintendo/i,                                       domain: 'nintendo.com' },
 
-  // ── Electricity Billers ───────────────────────────────────────────────────
+  // ── Electricity ───────────────────────────────────────────────────────────
   { match: /meralco/i,                                        domain: 'meralco.com.ph' },
-  { match: /visayan\s?electric|veco/i,                        domain: 'visayanelectric.com' },
-  { match: /davao\s?light|dlpc/i,                             domain: 'davaolightpower.com' },
+  { match: /visayan\s?electric|\bveco\b/i,                    domain: 'visayanelectric.com' },
+  { match: /davao\s?light|\bdlpc\b/i,                         domain: 'davaolightpower.com' },
   { match: /cebu\s?(electric|elec|coop)|cebeco/i,             domain: 'cebeco2.com' },
 
-  // ── Water Billers ─────────────────────────────────────────────────────────
+  // ── Water ─────────────────────────────────────────────────────────────────
   { match: /manila\s?water/i,                                 domain: 'manilawater.com' },
   { match: /maynilad/i,                                       domain: 'mayniladwater.com.ph' },
   { match: /primewater|prime\s?water/i,                       domain: 'primewater.com.ph' },
 
   // ── Internet / ISP ────────────────────────────────────────────────────────
   { match: /\bpldt\b/i,                                       domain: 'pldt.com' },
-  { match: /smart\s?(communications?|bro|fiber)?/i,           domain: 'smart.com.ph' },
-  { match: /globe(\s?telecom|\s?fiber|\s?broadband)?/i,       domain: 'globe.com.ph' },
+  { match: /\bsmart\b(\s?(communications?|bro|fiber))?/i,     domain: 'smart.com.ph' },
+  { match: /globe(\s?(telecom|fiber|broadband))?/i,           domain: 'globe.com.ph' },
   { match: /converge(\s?ict)?/i,                              domain: 'convergeict.com' },
   { match: /\bdito\b(\s?telecommunity)?/i,                    domain: 'dito.ph' },
   { match: /sky\s?(cable|broadband|fiber)?/i,                 domain: 'mysky.com.ph' },
   { match: /eastern\s?communications?/i,                      domain: 'eastern.com.ph' },
 
-  // ── Mobile / Postpaid (telco sub-brands) ─────────────────────────────────
-  // Globe and Smart already matched above; these catch the sub-brands
-  { match: /\btnt\b|talk\s?n\s?text/i,                        domain: 'smart.com.ph' },  // TNT is under Smart/PLDT
-  { match: /\btm\b|touch\s?mobile/i,                          domain: 'globe.com.ph' },   // TM is under Globe
-  { match: /sun\s?(cellular)?/i,                              domain: 'smart.com.ph' },   // Sun is under Smart/PLDT
+  // ── Mobile sub-brands ─────────────────────────────────────────────────────
+  { match: /\btnt\b|talk\s?n\s?text/i,                        domain: 'smart.com.ph' },
+  { match: /\btm\b|touch\s?mobile/i,                          domain: 'globe.com.ph' },
+  { match: /sun\s?(cellular)?/i,                              domain: 'smart.com.ph' },
 
 ]
 
@@ -107,8 +105,9 @@ export function getBrandDomain(name: string): string | null {
 }
 
 /**
- * Returns the Logo.dev URL for a given domain.
+ * Returns the Clearbit Logo API URL for a given domain.
+ * Free, no API key required, returns a PNG.
  */
 export function getLogoUrl(domain: string): string {
-  return `https://img.logo.dev/${domain}?token=pk_public&size=64&format=png`
+  return `https://logo.clearbit.com/${domain}`
 }

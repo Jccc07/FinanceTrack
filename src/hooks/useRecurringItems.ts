@@ -170,9 +170,10 @@ export function useMarkEntryPaid() {
       if (txnErr) throw txnErr
       return txn
     },
-    onSuccess: (_d, vars) => {
+    onSuccess: (txn, vars) => {
+      // Instant optimistic update so the checkbox flips immediately
+      qc.setQueryData([...ENTRY_PAID_KEY, userId, vars.entry.id, vars.monthKey], txn.id)
       qc.invalidateQueries({ queryKey: [...RECURRING_ENTRIES_KEY, userId, vars.monthKey] })
-      qc.invalidateQueries({ queryKey: [...ENTRY_PAID_KEY, userId, vars.entry.id, vars.monthKey] })
       qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
       qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
     },
@@ -199,8 +200,9 @@ export function useUnmarkEntryPaid() {
       return { entryId: entry.id, monthKey }
     },
     onSuccess: ({ entryId, monthKey }) => {
+      // Instant optimistic update so the checkbox clears immediately
+      qc.setQueryData([...ENTRY_PAID_KEY, userId, entryId, monthKey], null)
       qc.invalidateQueries({ queryKey: [...RECURRING_ENTRIES_KEY, userId, monthKey] })
-      qc.invalidateQueries({ queryKey: [...ENTRY_PAID_KEY, userId, entryId, monthKey] })
       qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY })
       qc.invalidateQueries({ queryKey: ACCOUNTS_KEY })
     },
