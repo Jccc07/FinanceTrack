@@ -204,19 +204,35 @@ export function Modal({ open, onClose, title, children, width = 480 }: {
         onClick={e => e.stopPropagation()}
         className="scale-in"
         style={{
-          background: 'var(--bg2)', border: '1px solid var(--border2)',
-          borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: Math.min(width, 360),
-          maxHeight: '75dvh', overflowY: 'auto',
-          padding: '18px 18px 20px', boxShadow: '0 24px 64px rgba(0,0,0,.6)',
+          position: 'relative',
+          width: '100%', maxWidth: Math.min(width, 360),
+          maxHeight: '75dvh',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 24px 64px rgba(0,0,0,.6)',
         }}
       >
-        {title && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700 }}>{title}</h2>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, fontSize: 18, lineHeight: 1 }}>✕</button>
-          </div>
-        )}
-        {children}
+        <div style={{
+          background: 'var(--bg2)', border: '1px solid var(--border2)',
+          borderRadius: 'var(--radius-lg)', width: '100%',
+          maxHeight: '75dvh', overflowY: 'auto',
+          padding: '18px 18px 20px',
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(255,255,255,.18) transparent',
+        } as React.CSSProperties}>
+          {title && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700 }}>{title}</h2>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4, borderRadius: 8, fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+          )}
+          {children}
+        </div>
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 40,
+          background: 'linear-gradient(to bottom, transparent, rgba(22,24,32,.85))',
+          borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
+          pointerEvents: 'none',
+        }} />
       </div>
     </div>,
     document.body
